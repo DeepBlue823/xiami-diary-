@@ -1,4 +1,6 @@
-const { kv } = require('@vercel/kv');
+import Redis from 'ioredis';
+
+const redis = new Redis(process.env.REDIS_URL);
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'xiami520';
 
@@ -10,9 +12,8 @@ export default async function handler(req, res) {
   const { password } = req.body;
 
   if (password === ADMIN_PASSWORD) {
-    // 设置一个 token，有效期 7 天
     const token = Buffer.from(`${Date.now()}:${ADMIN_PASSWORD}`).toString('base64');
-    await kv.set(`auth:${token}`, 'true', { ex: 60 * 60 * 24 * 7 });
+    await redis.set(`auth:${token}`, 'true', 'EX', 60 * 60 * 24 * 7);
     return res.json({ success: true, token });
   }
 

@@ -1,10 +1,12 @@
-const { kv } = require('@vercel/kv');
+import Redis from 'ioredis';
+
+const redis = new Redis(process.env.REDIS_URL);
 
 export default async function handler(req, res) {
   // 获取所有日记 - 公开
   if (req.method === 'GET') {
-    const diaries = await kv.get('diaries') || [];
-    return res.json(diaries);
+    const diaries = await redis.get('diaries') || '[]';
+    return res.json(JSON.parse(diaries));
   }
 
   // 验证 token
@@ -13,7 +15,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: '未授权' });
   }
 
-  const isValid = await kv.get(`auth:${token}`);
+  const isValid = await redis.get(`auth:${token}`);
   if (!isValid) {
     return res.status(401).json({ error: '登录已过期，请重新登录' });
   }
@@ -26,7 +28,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: '内容不能为空' });
     }
 
-    const diaries = await kv.get('diaries') || [];
+    const diariesJson = await redis.get('diaries') || '[]';
+    const diaries = JSON.parse(diariesJson);
 
     const newDiary = {
       id: Date.now(),
@@ -37,7 +40,7 @@ export default async function handler(req, res) {
     };
 
     diaries.unshift(newDiary);
-    await kv.set('diaries', diaries);
+    await redis.set('diaries', JSON.stringify(diaries));
 
     return res.json({ success: true, diary: newDiary });
   }
@@ -45,9 +48,10 @@ export default async function handler(req, res) {
   // 删除日记
   if (req.method === 'DELETE') {
     const { id } = req.body;
-    let diaries = await kv.get('diaries') || [];
+    const diariesJson = await redis.get('diaries') || '[]';
+    let diaries = JSON.parse(diariesJson);
     diaries = diaries.filter(d => d.id !== id);
-    await kv.set('diaries', diaries);
+    await redis.set('diaries', JSON.stringify(diaries));
 
     return res.json({ success: true });
   }
