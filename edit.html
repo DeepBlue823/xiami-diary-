@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>写日记 - 小咪的日记本</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Noto Serif SC", "STSong", "SimSun", serif;
+            background: linear-gradient(135deg, #f5e6d3 0%, #e8d4bc 50%, #dcc9b6 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #5d4037;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: 0.2em;
+            margin-bottom: 10px;
+        }
+
+        .date-display {
+            font-size: 1.2em;
+            color: #8d6e63;
+            font-style: italic;
+        }
+
+        .diary-card {
+            background: #fffef8;
+            border-radius: 8px;
+            box-shadow:
+                0 4px 15px rgba(93, 64, 55, 0.15),
+                inset 0 0 50px rgba(139, 109, 95, 0.05);
+            padding: 40px;
+            position: relative;
+            border: 1px solid #d4c4b5;
+        }
+
+        .diary-card::before {
+            content: '';
+            position: absolute;
+            left: 60px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #e8d4bc, #c9b8a8);
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-size: 1.1em;
+            color: #5d4037;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #d4c4b5;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-family: inherit;
+            background: #fffef8;
+            color: #3e2723;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #8d6e63;
+            box-shadow: 0 0 10px rgba(141, 110, 99, 0.2);
+        }
+
+        textarea {
+            min-height: 250px;
+            resize: vertical;
+            line-height: 1.8;
+        }
+
+        .mood-selector {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .mood-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #d4c4b5;
+            background: #fffef8;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mood-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .mood-btn.selected {
+            border-color: #8d6e63;
+            background: #f5e6d3;
+            transform: scale(1.15);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8d6e63, #6d4c41);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(109, 76, 65, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(109, 76, 65, 0.4);
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: #5d4037;
+            border: 2px solid #d4c4b5;
+        }
+
+        .btn-secondary:hover {
+            background: #f5e6d3;
+            border-color: #8d6e63;
+        }
+
+        .diary-list {
+            margin-top: 40px;
+        }
+
+        .diary-list h2 {
+            color: #5d4037;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid #d4c4b5;
+            padding-bottom: 10px;
+        }
+
+        .diary-item {
+            background: #fffef8;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(93, 64, 55, 0.1);
+            border-left: 4px solid #8d6e63;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .diary-item:hover {
+            transform: translateX(5px);
+        }
+
+        .diary-item .date {
+            color: #8d6e63;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .diary-item .title {
+            color: #3e2723;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .diary-item .preview {
+            color: #5d4037;
+            font-size: 0.95em;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .diary-item .mood {
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+
+        .delete-btn {
+            float: right;
+            background: none;
+            border: none;
+            color: #a1887f;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 5px;
+            transition: color 0.3s;
+        }
+
+        .delete-btn:hover {
+            color: #d32f2f;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #5d4037;
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.5s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #8d6e63;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        /* 登录弹窗 */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(93, 64, 55, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background: #fffef8;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .login-box h2 {
+            color: #5d4037;
+            margin-bottom: 20px;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #d4c4b5;
+            border-radius: 8px;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .login-box .btn {
+            width: 100%;
+        }
+
+        .login-error {
+            color: #d32f2f;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #fff;
+            border: 2px solid #d4c4b5;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            color: #5d4037;
+        }
+
+        @media (max-width: 600px) {
+            .diary-card {
+                padding: 25px;
+            }
+
+            .diary-card::before {
+                left: 30px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="logout-btn" onclick="logout()">退出登录</button>
+
+    <div class="container">
+        <header>
+            <h1>写日记</h1>
+            <div class="date-display" id="currentDate"></div>
+        </header>
+
+        <div class="diary-card">
+            <div class="input-group">
+                <label for="diaryTitle">今日标题</label>
+                <input type="text" id="diaryTitle" placeholder="给今天起个标题吧...">
+            </div>
+
+            <div class="input-group">
+                <label>今日心情</label>
+                <div class="mood-selector">
+                    <button class="mood-btn" data-mood="happy" title="开心">😊</button>
+                    <button class="mood-btn" data-mood="love" title="甜蜜">😍</button>
+                    <button class="mood-btn" data-mood="peaceful" title="平静">😌</button>
+                    <button class="mood-btn" data-mood="sad" title="难过">😢</button>
+                    <button class="mood-btn" data-mood="angry" title="生气">😤</button>
+                    <button class="mood-btn" data-mood="tired" title="疲惫">😴</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="diaryContent">今日记录</label>
+                <textarea id="diaryContent" placeholder="今天发生了什么有趣的事情呢？"></textarea>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="saveDiary()">保存日记</button>
+                <button class="btn btn-secondary" onclick="clearForm()">清空</button>
+            </div>
+        </div>
+
+        <div class="diary-list">
+            <h2>所有日记</h2>
+            <div id="diaryListContent"></div>
+        </div>
+    </div>
+
+    <!-- 登录弹窗 -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <h2>请输入密码</h2>
+            <div class="login-error" id="loginError">密码错误，请重试</div>
+            <input type="password" id="password" placeholder="请输入管理密码" onkeypress="handleEnter(event)">
+            <button class="btn btn-primary" onclick="login()">登录</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">保存成功啦～</div>
+
+    <script>
+        const API_BASE = '';
+        let authToken = localStorage.getItem('xiami_token');
+
+        // 检查登录状态
+        async function checkAuth() {
+            if (!authToken) {
+                document.getElementById('loginOverlay').style.display = 'flex';
+                return false;
+            }
+            return true;
+        }
+
+        // 登录
+        async function login() {
+            const password = document.getElementById('password').value;
+            if (!password) return;
+
+            try {
+                const response = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('xiami_token', data.token);
+                    authToken = data.token;
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    fetchDiaries();
+                } else {
+                    document.getElementById('loginError').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('xiami_token');
+            location.reload();
+        }
+
+        // 回车登录
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                login();
+            }
+        }
+
+        // 显示当前日期
+        function updateDate() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-CN', options);
+        }
+
+        // 心情选择
+        let selectedMood = null;
+        document.querySelectorAll('.mood-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedMood = this.dataset.mood;
+            });
+        });
+
+        // 保存日记
+        async function saveDiary() {
+            const title = document.getElementById('diaryTitle').value.trim();
+            const content = document.getElementById('diaryContent').value.trim();
+
+            if (!title && !content) {
+                showToast('请写点什么吧～');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/diaries', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        title: title || '无标题',
+                        content: content,
+                        mood: selectedMood
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('保存成功啦～');
+                    clearForm();
+                    fetchDiaries();
+                } else {
+                    showToast(data.error || '保存失败');
+                }
+            } catch (error) {
+                showToast('保存失败，请重试');
+            }
+        }
+
+        // 清空表单
+        function clearForm() {
+            document.getElementById('diaryTitle').value = '';
+            document.getElementById('diaryContent').value = '';
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+            selectedMood = null;
+        }
+
+        // 显示提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // 获取日记列表
+        async function fetchDiaries() {
+            try {
+                const response = await fetch('/api/diaries');
+                const diaries = await response.json();
+                renderDiaryList(diaries);
+            } catch (error) {
+                document.getElementById('diaryListContent').innerHTML =
+                    '<div class="empty-state">加载失败，请稍后重试</div>';
+            }
+        }
+
+        // 渲染日记列表
+        function renderDiaryList(diaries) {
+            const container = document.getElementById('diaryListContent');
+
+            if (!diaries || diaries.length === 0) {
+                container.innerHTML = '<div class="empty-state">还没有日记呢，开始写第一篇吧～</div>';
+                return;
+            }
+
+            const moodEmojis = {
+                happy: '😊',
+                love: '😍',
+                peaceful: '😌',
+                sad: '😢',
+                angry: '😤',
+                tired: '😴'
+            };
+
+            container.innerHTML = diaries.map(diary => {
+                const date = new Date(diary.date);
+                const dateStr = date.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'short'
+                });
+
+                return `
+                    <div class="diary-item" onclick="viewDiary('${diary.id}')">
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary(${diary.id})">×</button>
+                        <div class="date">${dateStr}</div>
+                        <div class="title">${diary.title}</div>
+                        <div class="preview">${diary.content}</div>
+                        ${diary.mood ? `<div class="mood">${moodEmojis[diary.mood]}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 查看日记详情
+        function viewDiary(id) {
+            const diaries = JSON.parse(document.getElementById('diaryListContent').dataset.diaries || '[]');
+            const diary = diaries.find(d => d.id == id);
+            if (!diary) return;
+
+            const moodEmojis = {
+                happy: '😊',
+                love: '😍',
+                peaceful: '😌',
+                sad: '😢',
+                angry: '😤',
+                tired: '😴'
+            };
+
+            const date = new Date(diary.date);
+            const dateStr = date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+
+            alert(`${dateStr}\n\n${diary.title}\n\n${diary.mood ? moodEmojis[diary.mood] + ' ' : ''}${diary.content}`);
+        }
+
+        // 删除日记
+        async function deleteDiary(id) {
+            if (!confirm('确定要删除这篇日记吗？')) return;
+
+            try {
+                const response = await fetch('/api/diaries', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ id })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('已删除');
+                    fetchDiaries();
+                } else {
+                    showToast(data.error || '删除失败');
+                }
+            } catch (error) {
+                showToast('删除失败，请重试');
+            }
+        }
+
+        // 初始化
+        updateDate();
+        checkAuth().then(isLoggedIn => {
+            if (isLoggedIn) {
+                fetchDiaries();
+            }
+        });
+    </script>
+</body>
+</html>

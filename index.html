@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小咪的日记本</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Noto Serif SC", "STSong", "SimSun", serif;
+            background: linear-gradient(135deg, #f5e6d3 0%, #e8d4bc 50%, #dcc9b6 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #5d4037;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: 0.2em;
+            margin-bottom: 10px;
+        }
+
+        .date-display {
+            font-size: 1.2em;
+            color: #8d6e63;
+            font-style: italic;
+        }
+
+        .diary-list {
+            margin-top: 20px;
+        }
+
+        .diary-list h2 {
+            color: #5d4037;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid #d4c4b5;
+            padding-bottom: 10px;
+        }
+
+        .diary-item {
+            background: #fffef8;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(93, 64, 55, 0.1);
+            border-left: 4px solid #8d6e63;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .diary-item:hover {
+            transform: translateX(5px);
+        }
+
+        .diary-item .date {
+            color: #8d6e63;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .diary-item .title {
+            color: #3e2723;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .diary-item .preview {
+            color: #5d4037;
+            font-size: 0.95em;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .diary-item .mood {
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #8d6e63;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        .loading {
+            text-align: center;
+            color: #8d6e63;
+            padding: 20px;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>小咪的日记本</h1>
+            <div class="date-display" id="currentDate"></div>
+        </header>
+
+        <div class="diary-list">
+            <h2>日记列表</h2>
+            <div id="diaryListContent">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const moodEmojis = {
+            happy: '😊',
+            love: '😍',
+            peaceful: '😌',
+            sad: '😢',
+            angry: '😤',
+            tired: '😴'
+        };
+
+        // 显示当前日期
+        function updateDate() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-CN', options);
+        }
+
+        // 获取日记列表
+        async function fetchDiaries() {
+            try {
+                const response = await fetch('/api/diaries');
+                const diaries = await response.json();
+                document.getElementById('diaryListContent').dataset.diaries = JSON.stringify(diaries);
+                renderDiaryList(diaries);
+            } catch (error) {
+                document.getElementById('diaryListContent').innerHTML =
+                    '<div class="empty-state">加载失败，请稍后重试</div>';
+            }
+        }
+
+        // 渲染日记列表
+        function renderDiaryList(diaries) {
+            const container = document.getElementById('diaryListContent');
+
+            if (!diaries || diaries.length === 0) {
+                container.innerHTML = '<div class="empty-state">还没有日记呢～</div>';
+                return;
+            }
+
+            container.innerHTML = diaries.map(diary => {
+                const date = new Date(diary.date);
+                const dateStr = date.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'short'
+                });
+
+                return `
+                    <div class="diary-item" onclick="viewDiary('${diary.id}')">
+                        <div class="date">${dateStr}</div>
+                        <div class="title">${diary.title}</div>
+                        <div class="preview">${diary.content}</div>
+                        ${diary.mood ? `<div class="mood">${moodEmojis[diary.mood]}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 查看日记详情
+        function viewDiary(id) {
+            const diaries = JSON.parse(document.getElementById('diaryListContent').dataset.diaries || '[]');
+            const diary = diaries.find(d => d.id == id);
+            if (!diary) return;
+
+            const date = new Date(diary.date);
+            const dateStr = date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+
+            alert(`${dateStr}\n\n${diary.title}\n\n${diary.mood ? moodEmojis[diary.mood] + ' ' : ''}${diary.content}`);
+        }
+
+        // 初始化
+        updateDate();
+        fetchDiaries();
+    </script>
+</body>
+</html>
