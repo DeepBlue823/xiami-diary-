@@ -887,7 +887,7 @@
                     const current = new Date(year, month, day);
                     if (current >= start && current <= end) {
                         isMeetingDay = true;
-                        tooltip = tooltip ? tooltip + '<br>🤍 见面日' : '🤍 见面日';
+                        tooltip = tooltip ? tooltip + '<br>💜 见面日' : '💜 见面日';
                         break;
                     }
                 }
@@ -905,7 +905,7 @@
                 // 见面日优先显示粉色背景
                 if (isMeetingDay) {
                     classes += ' has-diary';
-                    style = 'style="--diary-color: #FF69B4"';
+                    style = 'style="--diary-color: #BA68C8"';
                 } else if (diaryForDay) {
                     classes += ' has-diary';
                     const color = moodColors[diaryForDay.mood] || defaultMoodColor;
