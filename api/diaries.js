@@ -66,7 +66,7 @@ export default async function handler(req, res) {
 
   // 保存/更新日记
   if (req.method === 'POST') {
-    const { id, title, content, mood, date, girlfriendLocation, myLocation } = req.body;
+    const { id, title, content, mood, date, girlfriendLocation, myLocation, meetingStartDate, meetingEndDate } = req.body;
 
     if (!title && !content) {
       return res.status(400).json({ error: '内容不能为空' });
@@ -89,7 +89,9 @@ export default async function handler(req, res) {
           mood: mood || null,
           date: diaryDate,
           girlfriendLocation: girlfriendLocation || null,
-          myLocation: myLocation || null
+          myLocation: myLocation || null,
+          meetingStartDate: meetingStartDate || null,
+          meetingEndDate: meetingEndDate || null
         };
         await redis.set('diaries', JSON.stringify(diaries));
         return res.json({ success: true, diary: diaries[index] });
@@ -104,7 +106,9 @@ export default async function handler(req, res) {
       content: content,
       mood: mood || null,
       girlfriendLocation: girlfriendLocation || null,
-      myLocation: myLocation || null
+      myLocation: myLocation || null,
+      meetingStartDate: meetingStartDate || null,
+      meetingEndDate: meetingEndDate || null
     };
 
     diaries.unshift(newDiary);

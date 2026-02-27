@@ -442,6 +442,15 @@
                 <textarea id="diaryContent" placeholder="今天发生了什么有趣的事情呢？"></textarea>
             </div>
 
+            <div class="input-group">
+                <label>见面日期（可选）</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="date" id="meetingStartDate" style="flex: 1;">
+                    <span>至</span>
+                    <input type="date" id="meetingEndDate" style="flex: 1;">
+                </div>
+            </div>
+
             <div class="btn-group">
                 <button class="btn btn-primary" onclick="saveDiary()">保存日记</button>
                 <button class="btn btn-secondary" onclick="clearForm()">清空</button>
@@ -546,6 +555,8 @@
             const dateInput = document.getElementById('diaryDate').value;
             const girlfriendLocation = document.getElementById('girlfriendLocation').value.trim();
             const myLocation = document.getElementById('myLocation').value.trim();
+            const meetingStartDate = document.getElementById('meetingStartDate').value;
+            const meetingEndDate = document.getElementById('meetingEndDate').value;
 
             if (!title && !content) {
                 showToast('请写点什么吧～');
@@ -559,7 +570,9 @@
                     mood: selectedMood,
                     date: dateInput || null,
                     girlfriendLocation: girlfriendLocation || null,
-                    myLocation: myLocation || null
+                    myLocation: myLocation || null,
+                    meetingStartDate: meetingStartDate || null,
+                    meetingEndDate: meetingEndDate || null
                 };
 
                 let response;
@@ -612,6 +625,8 @@
             document.getElementById('diaryDate').value = diary.date ? diary.date.split('T')[0] : '';
             document.getElementById('girlfriendLocation').value = diary.girlfriendLocation || '';
             document.getElementById('myLocation').value = diary.myLocation || '';
+            document.getElementById('meetingStartDate').value = diary.meetingStartDate || '';
+            document.getElementById('meetingEndDate').value = diary.meetingEndDate || '';
 
             // 设置心情
             document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
@@ -641,6 +656,8 @@
             document.getElementById('diaryContent').value = '';
             document.getElementById('girlfriendLocation').value = '';
             document.getElementById('myLocation').value = '';
+            document.getElementById('meetingStartDate').value = '';
+            document.getElementById('meetingEndDate').value = '';
             document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
             selectedMood = null;
             editingId = null;

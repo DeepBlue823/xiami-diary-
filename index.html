@@ -874,6 +874,18 @@
                     tooltip = `在一起 ${diffDays} 天 💕`;
                 }
 
+                // 检查是否是见面日期
+                let isMeetingDay = false;
+                if (diaryForDay && diaryForDay.meetingStartDate && diaryForDay.meetingEndDate) {
+                    const start = new Date(diaryForDay.meetingStartDate);
+                    const end = new Date(diaryForDay.meetingEndDate);
+                    const current = new Date(year, month, day);
+                    if (current >= start && current <= end) {
+                        isMeetingDay = true;
+                        tooltip = tooltip ? tooltip + '<br>🤍 见面日' : '🤍 见面日';
+                    }
+                }
+
                 // 如果有日记，添加日记预览
                 if (diaryForDay) {
                     const preview = diaryForDay.content ? diaryForDay.content.substring(0, 30) + '...' : '无内容';
@@ -885,14 +897,22 @@
                 }
                 if (diaryForDay) {
                     classes += ' has-diary';
-                    const color = moodColors[diaryForDay.mood] || defaultMoodColor;
+                    let color;
+                    if (isMeetingDay) {
+                        color = '#FF69B4'; // 粉红色表示见面日
+                    } else {
+                        color = moodColors[diaryForDay.mood] || defaultMoodColor;
+                    }
                     style = `style="--diary-color: ${color}"`;
                 }
+
+                const meetingMarker = isMeetingDay ? '<span class="special-marker anniversary-marker">🤍</span>' : '';
 
                 html += `
                     <div class="${classes}" ${style} onclick="goToDiary('${dateStr}')">
                         ${day}
                         ${specialMarker}
+                        ${meetingMarker}
                         ${tooltip ? `<div class="calendar-tooltip">${tooltip}</div>` : ''}
                     </div>
                 `;
