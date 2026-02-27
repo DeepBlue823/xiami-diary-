@@ -662,6 +662,7 @@
             try {
                 const response = await fetch('/api/diaries');
                 const diaries = await response.json();
+                document.getElementById('diaryListContent').dataset.diaries = JSON.stringify(diaries);
                 renderDiaryList(diaries);
             } catch (error) {
                 document.getElementById('diaryListContent').innerHTML =
