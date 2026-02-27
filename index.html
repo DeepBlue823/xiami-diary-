@@ -882,10 +882,10 @@
                 // 检查是否是见面日期
                 let isMeetingDay = false;
                 for (const meeting of meetings) {
-                    const start = new Date(meeting.startDate);
-                    const end = new Date(meeting.endDate);
-                    const current = new Date(year, month, day);
-                    if (current >= start && current <= end) {
+                    const startStr = meeting.startDate.split('T')[0];
+                    const endStr = meeting.endDate.split('T')[0];
+                    const currentStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    if (currentStr >= startStr && currentStr <= endStr) {
                         isMeetingDay = true;
                         tooltip = tooltip ? tooltip + '<br>💜 见面日' : '💜 见面日';
                         break;
