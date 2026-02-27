@@ -442,19 +442,27 @@
                 <textarea id="diaryContent" placeholder="今天发生了什么有趣的事情呢？"></textarea>
             </div>
 
-            <div class="input-group">
-                <label>见面日期（可选）</label>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="date" id="meetingStartDate" style="flex: 1;">
-                    <span>至</span>
-                    <input type="date" id="meetingEndDate" style="flex: 1;">
-                </div>
-            </div>
-
             <div class="btn-group">
                 <button class="btn btn-primary" onclick="saveDiary()">保存日记</button>
                 <button class="btn btn-secondary" onclick="clearForm()">清空</button>
             </div>
+        </div>
+
+        <!-- 见面日期管理 -->
+        <div class="diary-card" style="margin-top: 30px;">
+            <h2 style="color: #5d4037; font-size: 1.3em; margin-bottom: 20px; text-align: center;">见面日期管理</h2>
+
+            <div class="input-group">
+                <label>添加见面日期</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="date" id="newMeetingStart" style="flex: 1;">
+                    <span>至</span>
+                    <input type="date" id="newMeetingEnd" style="flex: 1;">
+                    <button class="btn btn-primary" onclick="addMeeting()">添加</button>
+                </div>
+            </div>
+
+            <div id="meetingsList"></div>
         </div>
 
         <div class="diary-list">
@@ -555,8 +563,6 @@
             const dateInput = document.getElementById('diaryDate').value;
             const girlfriendLocation = document.getElementById('girlfriendLocation').value.trim();
             const myLocation = document.getElementById('myLocation').value.trim();
-            const meetingStartDate = document.getElementById('meetingStartDate').value;
-            const meetingEndDate = document.getElementById('meetingEndDate').value;
 
             if (!title && !content) {
                 showToast('请写点什么吧～');
@@ -570,9 +576,7 @@
                     mood: selectedMood,
                     date: dateInput || null,
                     girlfriendLocation: girlfriendLocation || null,
-                    myLocation: myLocation || null,
-                    meetingStartDate: meetingStartDate || null,
-                    meetingEndDate: meetingEndDate || null
+                    myLocation: myLocation || null
                 };
 
                 let response;
@@ -625,8 +629,6 @@
             document.getElementById('diaryDate').value = diary.date ? diary.date.split('T')[0] : '';
             document.getElementById('girlfriendLocation').value = diary.girlfriendLocation || '';
             document.getElementById('myLocation').value = diary.myLocation || '';
-            document.getElementById('meetingStartDate').value = diary.meetingStartDate || '';
-            document.getElementById('meetingEndDate').value = diary.meetingEndDate || '';
 
             // 设置心情
             document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
@@ -656,8 +658,6 @@
             document.getElementById('diaryContent').value = '';
             document.getElementById('girlfriendLocation').value = '';
             document.getElementById('myLocation').value = '';
-            document.getElementById('meetingStartDate').value = '';
-            document.getElementById('meetingEndDate').value = '';
             document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
             selectedMood = null;
             editingId = null;
@@ -790,11 +790,118 @@
             }
         }
 
+        // 获取见面日期列表
+        async function fetchMeetings() {
+            try {
+                const response = await fetch('/api/diaries?action=meetings');
+                const meetings = await response.json();
+                renderMeetings(meetings);
+            } catch (error) {
+                console.error('加载见面日期失败:', error);
+            }
+        }
+
+        // 渲染见面日期列表
+        function renderMeetings(meetings) {
+            const container = document.getElementById('meetingsList');
+
+            if (!meetings || meetings.length === 0) {
+                container.innerHTML = '<div class="empty-state">还没有见面日期记录</div>';
+                return;
+            }
+
+            container.innerHTML = meetings.map(meeting => {
+                const start = new Date(meeting.startDate);
+                const end = new Date(meeting.endDate);
+                const startStr = start.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
+                const endStr = end.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
+
+                return `
+                    <div class="diary-item" style="cursor: default;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>🤍 ${startStr} - ${endStr}</span>
+                            <button class="delete-btn" onclick="deleteMeeting(${meeting.id})">×</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 添加见面日期
+        async function addMeeting() {
+            const startDate = document.getElementById('newMeetingStart').value;
+            const endDate = document.getElementById('newMeetingEnd').value;
+
+            if (!startDate || !endDate) {
+                showToast('请选择开始和结束日期');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/diaries', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        action: 'addMeeting',
+                        startDate,
+                        endDate
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('添加成功');
+                    document.getElementById('newMeetingStart').value = '';
+                    document.getElementById('newMeetingEnd').value = '';
+                    fetchMeetings();
+                } else {
+                    showToast(data.error || '添加失败');
+                }
+            } catch (error) {
+                showToast('添加失败，请重试');
+            }
+        }
+
+        // 删除见面日期
+        async function deleteMeeting(id) {
+            if (!confirm('确定删除这个见面日期吗？')) return;
+
+            try {
+                const response = await fetch('/api/diaries', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        action: 'deleteMeeting',
+                        id
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('已删除');
+                    fetchMeetings();
+                } else {
+                    showToast(data.error || '删除失败');
+                }
+            } catch (error) {
+                showToast('删除失败，请重试');
+            }
+        }
+
         // 初始化
         updateDate();
         checkAuth().then(isLoggedIn => {
             if (isLoggedIn) {
                 fetchDiaries();
+                fetchMeetings();
             }
         });
     </script>

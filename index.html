@@ -763,6 +763,7 @@
         let currentYear = new Date().getFullYear();
         let currentMonth = new Date().getMonth();
         let diaries = [];
+        let meetings = [];
         let selectedEmoji = '';
         let currentUser = localStorage.getItem('commentUser') || 'girlfriend';
 
@@ -794,11 +795,15 @@
             }
         }
 
-        // 获取日记列表
+        // 获取日记列表和见面日期
         async function fetchDiaries() {
             try {
-                const response = await fetch('/api/diaries');
-                diaries = await response.json();
+                const [diariesRes, meetingsRes] = await Promise.all([
+                    fetch('/api/diaries'),
+                    fetch('/api/diaries?action=meetings')
+                ]);
+                diaries = await diariesRes.json();
+                meetings = await meetingsRes.json();
                 document.getElementById('diaryListContent').dataset.diaries = JSON.stringify(diaries);
                 renderCalendar();
                 renderDiaryList(diaries);
@@ -876,13 +881,14 @@
 
                 // 检查是否是见面日期
                 let isMeetingDay = false;
-                if (diaryForDay && diaryForDay.meetingStartDate && diaryForDay.meetingEndDate) {
-                    const start = new Date(diaryForDay.meetingStartDate);
-                    const end = new Date(diaryForDay.meetingEndDate);
+                for (const meeting of meetings) {
+                    const start = new Date(meeting.startDate);
+                    const end = new Date(meeting.endDate);
                     const current = new Date(year, month, day);
                     if (current >= start && current <= end) {
                         isMeetingDay = true;
                         tooltip = tooltip ? tooltip + '<br>🤍 见面日' : '🤍 见面日';
+                        break;
                     }
                 }
 

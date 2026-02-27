@@ -18,6 +18,12 @@ export default async function handler(req, res) {
       return res.json(JSON.parse(commentsJson));
     }
 
+    // 获取见面日期
+    if (action === 'meetings') {
+      const meetingsJson = await redis.get('meetings') || '[]';
+      return res.json(JSON.parse(meetingsJson));
+    }
+
     // 默认获取日记列表
     const diaries = await redis.get('diaries') || '[]';
     return res.json(JSON.parse(diaries));
@@ -27,6 +33,44 @@ export default async function handler(req, res) {
   const token = req.headers.authorization?.replace('Bearer ', '');
 
   const { action } = req.body;
+
+  // 管理见面日期
+  if (action === 'addMeeting' || action === 'deleteMeeting') {
+    if (!token) {
+      return res.status(401).json({ error: '未授权' });
+    }
+
+    const isValid = await redis.get(`auth:${token}`);
+    if (!isValid) {
+      return res.status(401).json({ error: '登录已过期，请重新登录' });
+    }
+
+    const meetingsJson = await redis.get('meetings') || '[]';
+    let meetings = JSON.parse(meetingsJson);
+
+    if (action === 'addMeeting') {
+      const { startDate, endDate } = req.body;
+      if (!startDate || !endDate) {
+        return res.status(400).json({ error: '请选择开始和结束日期' });
+      }
+
+      const newMeeting = {
+        id: Date.now(),
+        startDate,
+        endDate
+      };
+      meetings.push(newMeeting);
+      await redis.set('meetings', JSON.stringify(meetings));
+      return res.json({ success: true, meeting: newMeeting });
+    }
+
+    if (action === 'deleteMeeting') {
+      const { id } = req.body;
+      meetings = meetings.filter(m => m.id !== id);
+      await redis.set('meetings', JSON.stringify(meetings));
+      return res.json({ success: true });
+    }
+  }
 
   // 添加评论不需要严格验证（可以匿名评论），或者可以添加简单验证
   if (action === 'addComment') {
@@ -66,7 +110,7 @@ export default async function handler(req, res) {
 
   // 保存/更新日记
   if (req.method === 'POST') {
-    const { id, title, content, mood, date, girlfriendLocation, myLocation, meetingStartDate, meetingEndDate } = req.body;
+    const { id, title, content, mood, date, girlfriendLocation, myLocation } = req.body;
 
     if (!title && !content) {
       return res.status(400).json({ error: '内容不能为空' });
@@ -89,9 +133,7 @@ export default async function handler(req, res) {
           mood: mood || null,
           date: diaryDate,
           girlfriendLocation: girlfriendLocation || null,
-          myLocation: myLocation || null,
-          meetingStartDate: meetingStartDate || null,
-          meetingEndDate: meetingEndDate || null
+          myLocation: myLocation || null
         };
         await redis.set('diaries', JSON.stringify(diaries));
         return res.json({ success: true, diary: diaries[index] });
@@ -106,9 +148,7 @@ export default async function handler(req, res) {
       content: content,
       mood: mood || null,
       girlfriendLocation: girlfriendLocation || null,
-      myLocation: myLocation || null,
-      meetingStartDate: meetingStartDate || null,
-      meetingEndDate: meetingEndDate || null
+      myLocation: myLocation || null
     };
 
     diaries.unshift(newDiary);
