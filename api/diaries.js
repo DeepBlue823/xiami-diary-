@@ -92,9 +92,20 @@ export default async function handler(req, res) {
     return res.json({ success: true, diary: newDiary });
   }
 
-  // 删除日记
+  // 删除日记或评论
   if (req.method === 'DELETE') {
-    const { id } = req.body;
+    const { action, id, diaryId, commentId } = req.body;
+
+    // 删除评论
+    if (action === 'deleteComment') {
+      const commentsJson = await redis.get(`comments:${diaryId}`) || '[]';
+      let comments = JSON.parse(commentsJson);
+      comments = comments.filter(c => c.id !== commentId);
+      await redis.set(`comments:${diaryId}`, JSON.stringify(comments));
+      return res.json({ success: true });
+    }
+
+    // 删除日记
     const diariesJson = await redis.get('diaries') || '[]';
     let diaries = JSON.parse(diariesJson);
     diaries = diaries.filter(d => d.id !== id);

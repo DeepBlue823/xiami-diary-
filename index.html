@@ -251,6 +251,25 @@
             font-size: 0.75em;
         }
 
+        .comment-item .delete-btn {
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 0.9em;
+            padding: 2px 5px;
+            opacity: 0;
+            transition: opacity 0.3s, color 0.3s;
+        }
+
+        .comment-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .comment-item .delete-btn:hover {
+            color: #FF6347;
+        }
+
         .comment-item .user-badge {
             font-size: 0.7em;
             padding: 2px 6px;
@@ -921,6 +940,7 @@
                             <span class="emoji">${c.emoji || '💬'}</span>
                             <span class="content">${c.content}</span>
                             <span class="time">${new Date(c.createdAt).toLocaleDateString('zh-CN')}</span>
+                            <button class="delete-btn" onclick="event.stopPropagation(); deleteComment(${diaryId}, ${c.id})">🗑️</button>
                         </div>
                     `).join('')}
                 </div>
@@ -954,6 +974,33 @@
                 btn.classList.remove('active');
             });
             document.querySelector(`.user-selector button.${user}`).classList.add('active');
+        }
+
+        // 删除评论
+        async function deleteComment(diaryId, commentId) {
+            if (!confirm('确定删除这条评论吗？')) return;
+
+            try {
+                const response = await fetch('/api/diaries', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'deleteComment',
+                        diaryId: diaryId,
+                        commentId: commentId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // 重新加载评论
+                    const commentsContainer = document.getElementById(`comments-${diaryId}`);
+                    await loadComments(diaryId, commentsContainer);
+                }
+            } catch (error) {
+                console.error('删除评论失败:', error);
+            }
         }
 
         // 切换表情选择器
