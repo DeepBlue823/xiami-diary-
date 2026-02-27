@@ -901,24 +901,21 @@
                 if (isCurrentMonth && today.getDate() === day) {
                     classes += ' today';
                 }
-                if (diaryForDay) {
+
+                // 见面日优先显示粉色背景
+                if (isMeetingDay) {
                     classes += ' has-diary';
-                    let color;
-                    if (isMeetingDay) {
-                        color = '#FF69B4'; // 粉红色表示见面日
-                    } else {
-                        color = moodColors[diaryForDay.mood] || defaultMoodColor;
-                    }
+                    style = 'style="--diary-color: #FF69B4"';
+                } else if (diaryForDay) {
+                    classes += ' has-diary';
+                    const color = moodColors[diaryForDay.mood] || defaultMoodColor;
                     style = `style="--diary-color: ${color}"`;
                 }
-
-                const meetingMarker = isMeetingDay ? '<span class="special-marker anniversary-marker">🤍</span>' : '';
 
                 html += `
                     <div class="${classes}" ${style} onclick="goToDiary('${dateStr}')">
                         ${day}
                         ${specialMarker}
-                        ${meetingMarker}
                         ${tooltip ? `<div class="calendar-tooltip">${tooltip}</div>` : ''}
                     </div>
                 `;
