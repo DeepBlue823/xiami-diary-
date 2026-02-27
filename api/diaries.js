@@ -5,12 +5,55 @@ const redis = new Redis(process.env.REDIS_URL);
 export default async function handler(req, res) {
   // 获取所有日记 - 公开
   if (req.method === 'GET') {
+    const action = req.query.action;
+
+    // 获取评论
+    if (action === 'comments') {
+      const diaryId = req.query.diaryId;
+      if (!diaryId) {
+        return res.status(400).json({ error: '缺少日记ID' });
+      }
+
+      const commentsJson = await redis.get(`comments:${diaryId}`) || '[]';
+      return res.json(JSON.parse(commentsJson));
+    }
+
+    // 默认获取日记列表
     const diaries = await redis.get('diaries') || '[]';
     return res.json(JSON.parse(diaries));
   }
 
-  // 验证 token
+  // 验证 token（评论需要验证）
   const token = req.headers.authorization?.replace('Bearer ', '');
+
+  const { action } = req.body;
+
+  // 添加评论不需要严格验证（可以匿名评论），或者可以添加简单验证
+  if (action === 'addComment') {
+    const { diaryId, content, emoji } = req.body;
+
+    if (!diaryId || !content) {
+      return res.status(400).json({ error: '内容不能为空' });
+    }
+
+    const commentsJson = await redis.get(`comments:${diaryId}`) || '[]';
+    const comments = JSON.parse(commentsJson);
+
+    const newComment = {
+      id: Date.now(),
+      diaryId: diaryId,
+      content: content,
+      emoji: emoji || '💬',
+      createdAt: new Date().toISOString()
+    };
+
+    comments.push(newComment);
+    await redis.set(`comments:${diaryId}`, JSON.stringify(comments));
+
+    return res.json({ success: true, comment: newComment });
+  }
+
+  // 以下操作需要验证 token
   if (!token) {
     return res.status(401).json({ error: '未授权' });
   }

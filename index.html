@@ -42,6 +42,102 @@
             font-style: italic;
         }
 
+        /* 日历样式 */
+        .calendar {
+            background: #fffef8;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(93, 64, 55, 0.15);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .calendar-header button {
+            background: #8d6e63;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+
+        .calendar-header button:hover {
+            background: #6d4c41;
+        }
+
+        .calendar-header span {
+            font-size: 1.3em;
+            color: #5d4037;
+            font-weight: bold;
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .calendar-weekdays span {
+            color: #8d6e63;
+            font-size: 0.9em;
+            padding: 5px;
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            position: relative;
+            font-size: 0.95em;
+            color: #5d4037;
+        }
+
+        .calendar-day:hover {
+            background: #f5e6d3;
+        }
+
+        .calendar-day.other-month {
+            color: #ccc;
+        }
+
+        .calendar-day.today {
+            background: #f5e6d3;
+            font-weight: bold;
+        }
+
+        .calendar-day.has-diary {
+            font-weight: bold;
+        }
+
+        .diary-marker {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 4px;
+        }
+
+        /* 日记列表样式 */
         .diary-list {
             margin-top: 20px;
         }
@@ -111,6 +207,123 @@
             margin-top: 10px;
         }
 
+        /* 评论样式 */
+        .diary-comments {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0d5c8;
+        }
+
+        .comments-title {
+            color: #8d6e63;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+        }
+
+        .comment-list {
+            margin-bottom: 12px;
+        }
+
+        .comment-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: #faf8f5;
+            border-radius: 6px;
+        }
+
+        .comment-item .emoji {
+            font-size: 1.2em;
+        }
+
+        .comment-item .content {
+            color: #5d4037;
+            font-size: 0.9em;
+            flex: 1;
+        }
+
+        .comment-item .time {
+            color: #aaa;
+            font-size: 0.75em;
+        }
+
+        .comment-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d4c4b5;
+            border-radius: 20px;
+            font-size: 0.9em;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .comment-input:focus {
+            border-color: #8d6e63;
+        }
+
+        .emoji-picker {
+            display: none;
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            padding: 8px;
+            gap: 5px;
+            flex-wrap: wrap;
+            width: 180px;
+            z-index: 10;
+        }
+
+        .emoji-picker.show {
+            display: flex;
+        }
+
+        .emoji-picker button {
+            background: none;
+            border: none;
+            font-size: 1.3em;
+            cursor: pointer;
+            padding: 3px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .emoji-picker button:hover {
+            background: #f5e6d3;
+        }
+
+        .emoji-btn {
+            position: relative;
+            background: none;
+            border: none;
+            font-size: 1.3em;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .comment-submit {
+            background: #8d6e63;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+
+        .comment-submit:hover {
+            background: #6d4c41;
+        }
+
         .empty-state {
             text-align: center;
             color: #8d6e63;
@@ -128,6 +341,14 @@
             h1 {
                 font-size: 1.8em;
             }
+
+            .calendar {
+                padding: 15px;
+            }
+
+            .calendar-day {
+                font-size: 0.85em;
+            }
         }
     </style>
 </head>
@@ -137,6 +358,18 @@
             <h1>小咪的日记本</h1>
             <div class="date-display" id="currentDate"></div>
         </header>
+
+        <div class="calendar">
+            <div class="calendar-header">
+                <button onclick="prevMonth()">◀</button>
+                <span id="currentMonth">2026年2月</span>
+                <button onclick="nextMonth()">▶</button>
+            </div>
+            <div class="calendar-weekdays">
+                <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+            </div>
+            <div class="calendar-days" id="calendarDays"></div>
+        </div>
 
         <div class="diary-list">
             <h2>日记列表</h2>
@@ -156,6 +389,24 @@
             tired: '😴'
         };
 
+        const moodColors = {
+            happy: '#FFD700',
+            love: '#FF69B4',
+            peaceful: '#87CEEB',
+            sad: '#9370DB',
+            angry: '#FF6347',
+            tired: '#A9A9A9'
+        };
+
+        const defaultMoodColor = '#8d6e63';
+
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+        let diaries = [];
+        let selectedEmoji = '';
+
+        const commentEmojis = ['💕', '👍', '❤️', '😍', '😂', '🎉', '😢', '👏'];
+
         // 显示当前日期
         function updateDate() {
             const now = new Date();
@@ -167,8 +418,9 @@
         async function fetchDiaries() {
             try {
                 const response = await fetch('/api/diaries');
-                const diaries = await response.json();
+                diaries = await response.json();
                 document.getElementById('diaryListContent').dataset.diaries = JSON.stringify(diaries);
+                renderCalendar();
                 renderDiaryList(diaries);
             } catch (error) {
                 document.getElementById('diaryListContent').innerHTML =
@@ -176,16 +428,126 @@
             }
         }
 
+        // 渲染日历
+        function renderCalendar() {
+            const year = currentYear;
+            const month = currentMonth;
+
+            document.getElementById('currentMonth').textContent = `${year}年${month + 1}月`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            const today = new Date();
+            const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+
+            const container = document.getElementById('calendarDays');
+            let html = '';
+
+            // 上月日期
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                html += `<div class="calendar-day other-month">${day}</div>`;
+            }
+
+            // 当月日期
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const diaryForDay = diaries.find(d => {
+                    const diaryDate = new Date(d.date);
+                    return diaryDate.getFullYear() === year &&
+                           diaryDate.getMonth() === month &&
+                           diaryDate.getDate() === day;
+                });
+
+                let classes = 'calendar-day';
+                if (isCurrentMonth && today.getDate() === day) {
+                    classes += ' today';
+                }
+                if (diaryForDay) {
+                    classes += ' has-diary';
+                }
+
+                const markerStyle = diaryForDay
+                    ? `style="background-color: ${moodColors[diaryForDay.mood] || defaultMoodColor}"`
+                    : '';
+
+                html += `
+                    <div class="${classes}" onclick="goToDiary('${dateStr}')">
+                        ${day}
+                        ${diaryForDay ? `<span class="diary-marker" ${markerStyle}></span>` : ''}
+                    </div>
+                `;
+            }
+
+            // 下月日期补齐
+            const totalCells = firstDay + daysInMonth;
+            const remainingCells = 42 - totalCells;
+            for (let i = 1; i <= remainingCells; i++) {
+                html += `<div class="calendar-day other-month">${i}</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // 上个月
+        function prevMonth() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar();
+        }
+
+        // 下个月
+        function nextMonth() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar();
+        }
+
+        // 跳转到有日记的日期
+        function goToDiary(dateStr) {
+            const diary = diaries.find(d => {
+                const diaryDate = new Date(d.date);
+                const targetDate = new Date(dateStr);
+                return diaryDate.toDateString() === targetDate.toDateString();
+            });
+
+            if (diary) {
+                // 滚动到日记列表
+                document.querySelector('.diary-list').scrollIntoView({ behavior: 'smooth' });
+
+                // 找到并展开对应的日记
+                setTimeout(() => {
+                    const diaryItems = document.querySelectorAll('.diary-item');
+                    diaryItems.forEach(item => {
+                        if (item.dataset.id == diary.id) {
+                            if (!item.classList.contains('expanded')) {
+                                item.click();
+                            }
+                            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+                }, 300);
+            }
+        }
+
         // 渲染日记列表
-        function renderDiaryList(diaries) {
+        function renderDiaryList(diaryData) {
             const container = document.getElementById('diaryListContent');
 
-            if (!diaries || diaries.length === 0) {
+            if (!diaryData || diaryData.length === 0) {
                 container.innerHTML = '<div class="empty-state">还没有日记呢～</div>';
                 return;
             }
 
-            container.innerHTML = diaries.map(diary => {
+            container.innerHTML = diaryData.map(diary => {
                 const date = new Date(diary.date);
                 const dateStr = date.toLocaleDateString('zh-CN', {
                     year: 'numeric',
@@ -201,22 +563,22 @@
                         <div class="preview">${diary.content}</div>
                         ${diary.mood ? `<div class="mood">${moodEmojis[diary.mood]}</div>` : ''}
                         <div class="expand-hint">点击展开</div>
+                        <div class="diary-comments" id="comments-${diary.id}" style="display: none;"></div>
                     </div>
                 `;
             }).join('');
         }
 
         // 查看/展开日记详情
-        function viewDiary(id) {
-            const diaries = JSON.parse(document.getElementById('diaryListContent').dataset.diaries || '[]');
-            const diary = diaries.find(d => d.id == id);
-            if (!diary) return;
-
-            // 找到对应的日记项元素并切换展开状态
+        async function viewDiary(id) {
             const diaryItems = document.querySelectorAll('.diary-item');
+            let isExpanding = false;
+
             diaryItems.forEach(item => {
                 if (item.dataset.id == id) {
+                    const wasExpanded = item.classList.contains('expanded');
                     item.classList.toggle('expanded');
+
                     // 更新提示文字
                     let hint = item.querySelector('.expand-hint');
                     if (item.classList.contains('expanded')) {
@@ -226,11 +588,121 @@
                             item.appendChild(hint);
                         }
                         hint.textContent = '点击收起';
+                        isExpanding = !wasExpanded;
                     } else if (hint) {
-                        hint.remove();
+                        hint.textContent = '点击展开';
                     }
                 }
             });
+
+            // 加载评论
+            const commentsContainer = document.getElementById(`comments-${id}`);
+            if (isExpanding && commentsContainer) {
+                commentsContainer.style.display = 'block';
+                await loadComments(id, commentsContainer);
+            } else if (commentsContainer) {
+                commentsContainer.style.display = 'none';
+            }
+        }
+
+        // 加载评论
+        async function loadComments(diaryId, container) {
+            try {
+                const response = await fetch(`/api/diaries?action=comments&diaryId=${diaryId}`);
+                const comments = await response.json();
+
+                renderComments(diaryId, comments, container);
+            } catch (error) {
+                console.error('加载评论失败:', error);
+            }
+        }
+
+        // 渲染评论
+        function renderComments(diaryId, comments, container) {
+            const commentsHtml = comments.length > 0 ? `
+                <div class="comments-title">评论 (${comments.length})</div>
+                <div class="comment-list">
+                    ${comments.map(c => `
+                        <div class="comment-item">
+                            <span class="emoji">${c.emoji || '💬'}</span>
+                            <span class="content">${c.content}</span>
+                            <span class="time">${new Date(c.createdAt).toLocaleDateString('zh-CN')}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<div class="comments-title">还没有评论</div>';
+
+            container.innerHTML = `
+                ${commentsHtml}
+                <div class="comment-input-wrapper" style="position: relative;">
+                    <input type="text" class="comment-input" id="input-${diaryId}"
+                           placeholder="添加评论..." onkeypress="handleCommentKeypress(event, ${diaryId})">
+                    <button class="emoji-btn" onclick="toggleEmojiPicker(${diaryId})">😊</button>
+                    <div class="emoji-picker" id="emoji-picker-${diaryId}">
+                        ${commentEmojis.map(e => `<button onclick="selectEmoji('${e}', ${diaryId})">${e}</button>`).join('')}
+                    </div>
+                    <button class="comment-submit" onclick="submitComment(${diaryId})">发送</button>
+                </div>
+            `;
+        }
+
+        // 切换表情选择器
+        function toggleEmojiPicker(diaryId) {
+            const picker = document.getElementById(`emoji-picker-${diaryId}`);
+            picker.classList.toggle('show');
+        }
+
+        // 选择表情
+        function selectEmoji(emoji, diaryId) {
+            const input = document.getElementById(`input-${diaryId}`);
+            input.value += emoji;
+            selectedEmoji = emoji;
+
+            const picker = document.getElementById(`emoji-picker-${diaryId}`);
+            picker.classList.remove('show');
+        }
+
+        // 提交评论
+        async function submitComment(diaryId) {
+            const input = document.getElementById(`input-${diaryId}`);
+            const content = input.value.trim();
+
+            if (!content && !selectedEmoji) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/diaries', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'addComment',
+                        diaryId: diaryId,
+                        content: content,
+                        emoji: selectedEmoji || '💬'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    input.value = '';
+                    selectedEmoji = '';
+
+                    // 重新加载评论
+                    const commentsContainer = document.getElementById(`comments-${diaryId}`);
+                    await loadComments(diaryId, commentsContainer);
+                }
+            } catch (error) {
+                console.error('提交评论失败:', error);
+            }
+        }
+
+        // 键盘提交评论
+        function handleCommentKeypress(event, diaryId) {
+            if (event.key === 'Enter') {
+                submitComment(diaryId);
+            }
         }
 
         // 初始化
