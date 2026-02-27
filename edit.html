@@ -76,6 +76,7 @@
         }
 
         input[type="text"],
+        input[type="date"],
         textarea {
             width: 100%;
             padding: 15px;
@@ -89,6 +90,7 @@
         }
 
         input[type="text"]:focus,
+        input[type="date"]:focus,
         textarea:focus {
             outline: none;
             border-color: #8d6e63;
@@ -219,6 +221,19 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+        }
+
+        .diary-item.expanded .preview {
+            -webkit-line-clamp: unset;
+            overflow: visible;
+        }
+
+        .diary-item .expand-hint {
+            color: #8d6e63;
+            font-size: 0.85em;
+            text-align: right;
+            margin-top: 8px;
+            font-style: italic;
         }
 
         .diary-item .mood {
@@ -365,6 +380,11 @@
             </div>
 
             <div class="input-group">
+                <label for="diaryDate">日记日期</label>
+                <input type="date" id="diaryDate">
+            </div>
+
+            <div class="input-group">
                 <label>今日心情</label>
                 <div class="mood-selector">
                     <button class="mood-btn" data-mood="happy" title="开心">😊</button>
@@ -479,6 +499,7 @@
         async function saveDiary() {
             const title = document.getElementById('diaryTitle').value.trim();
             const content = document.getElementById('diaryContent').value.trim();
+            const dateInput = document.getElementById('diaryDate').value;
 
             if (!title && !content) {
                 showToast('请写点什么吧～');
@@ -495,7 +516,8 @@
                     body: JSON.stringify({
                         title: title || '无标题',
                         content: content,
-                        mood: selectedMood
+                        mood: selectedMood,
+                        date: dateInput || null
                     })
                 });
 
@@ -516,6 +538,7 @@
         // 清空表单
         function clearForm() {
             document.getElementById('diaryTitle').value = '';
+            document.getElementById('diaryDate').value = '';
             document.getElementById('diaryContent').value = '';
             document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
             selectedMood = null;
@@ -571,41 +594,43 @@
                 });
 
                 return `
-                    <div class="diary-item" onclick="viewDiary('${diary.id}')">
+                    <div class="diary-item" data-id="${diary.id}" onclick="viewDiary('${diary.id}')">
                         <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary(${diary.id})">×</button>
                         <div class="date">${dateStr}</div>
                         <div class="title">${diary.title}</div>
                         <div class="preview">${diary.content}</div>
                         ${diary.mood ? `<div class="mood">${moodEmojis[diary.mood]}</div>` : ''}
+                        <div class="expand-hint">点击展开</div>
                     </div>
                 `;
             }).join('');
         }
 
-        // 查看日记详情
+        // 查看/展开日记详情
         function viewDiary(id) {
             const diaries = JSON.parse(document.getElementById('diaryListContent').dataset.diaries || '[]');
             const diary = diaries.find(d => d.id == id);
             if (!diary) return;
 
-            const moodEmojis = {
-                happy: '😊',
-                love: '😍',
-                peaceful: '😌',
-                sad: '😢',
-                angry: '😤',
-                tired: '😴'
-            };
-
-            const date = new Date(diary.date);
-            const dateStr = date.toLocaleDateString('zh-CN', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                weekday: 'long'
+            // 找到对应的日记项元素并切换展开状态
+            const diaryItems = document.querySelectorAll('.diary-item');
+            diaryItems.forEach(item => {
+                if (item.dataset.id == id) {
+                    item.classList.toggle('expanded');
+                    // 更新提示文字
+                    let hint = item.querySelector('.expand-hint');
+                    if (item.classList.contains('expanded')) {
+                        if (!hint) {
+                            hint = document.createElement('div');
+                            hint.className = 'expand-hint';
+                            item.appendChild(hint);
+                        }
+                        hint.textContent = '点击收起';
+                    } else if (hint) {
+                        hint.remove();
+                    }
+                }
             });
-
-            alert(`${dateStr}\n\n${diary.title}\n\n${diary.mood ? moodEmojis[diary.mood] + ' ' : ''}${diary.content}`);
         }
 
         // 删除日记

@@ -93,6 +93,19 @@
             overflow: hidden;
         }
 
+        .diary-item.expanded .preview {
+            -webkit-line-clamp: unset;
+            overflow: visible;
+        }
+
+        .diary-item .expand-hint {
+            color: #8d6e63;
+            font-size: 0.85em;
+            text-align: right;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
         .diary-item .mood {
             font-size: 1.2em;
             margin-top: 10px;
@@ -182,31 +195,42 @@
                 });
 
                 return `
-                    <div class="diary-item" onclick="viewDiary('${diary.id}')">
+                    <div class="diary-item" data-id="${diary.id}" onclick="viewDiary('${diary.id}')">
                         <div class="date">${dateStr}</div>
                         <div class="title">${diary.title}</div>
                         <div class="preview">${diary.content}</div>
                         ${diary.mood ? `<div class="mood">${moodEmojis[diary.mood]}</div>` : ''}
+                        <div class="expand-hint">点击展开</div>
                     </div>
                 `;
             }).join('');
         }
 
-        // 查看日记详情
+        // 查看/展开日记详情
         function viewDiary(id) {
             const diaries = JSON.parse(document.getElementById('diaryListContent').dataset.diaries || '[]');
             const diary = diaries.find(d => d.id == id);
             if (!diary) return;
 
-            const date = new Date(diary.date);
-            const dateStr = date.toLocaleDateString('zh-CN', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                weekday: 'long'
+            // 找到对应的日记项元素并切换展开状态
+            const diaryItems = document.querySelectorAll('.diary-item');
+            diaryItems.forEach(item => {
+                if (item.dataset.id == id) {
+                    item.classList.toggle('expanded');
+                    // 更新提示文字
+                    let hint = item.querySelector('.expand-hint');
+                    if (item.classList.contains('expanded')) {
+                        if (!hint) {
+                            hint = document.createElement('div');
+                            hint.className = 'expand-hint';
+                            item.appendChild(hint);
+                        }
+                        hint.textContent = '点击收起';
+                    } else if (hint) {
+                        hint.remove();
+                    }
+                }
             });
-
-            alert(`${dateStr}\n\n${diary.title}\n\n${diary.mood ? moodEmojis[diary.mood] + ' ' : ''}${diary.content}`);
         }
 
         // 初始化

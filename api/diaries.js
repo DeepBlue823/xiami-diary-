@@ -22,7 +22,7 @@ export default async function handler(req, res) {
 
   // 保存日记
   if (req.method === 'POST') {
-    const { title, content, mood } = req.body;
+    const { title, content, mood, date } = req.body;
 
     if (!title && !content) {
       return res.status(400).json({ error: '内容不能为空' });
@@ -31,9 +31,12 @@ export default async function handler(req, res) {
     const diariesJson = await redis.get('diaries') || '[]';
     const diaries = JSON.parse(diariesJson);
 
+    // 如果提供了自定义日期，使用它；否则使用当前日期
+    const diaryDate = date ? new Date(date).toISOString() : new Date().toISOString();
+
     const newDiary = {
       id: Date.now(),
-      date: new Date().toISOString(),
+      date: diaryDate,
       title: title || '无标题',
       content: content,
       mood: mood || null
