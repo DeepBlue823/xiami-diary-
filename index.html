@@ -170,6 +170,16 @@
             opacity: 0.85;
         }
 
+        .calendar-day.is-meeting {
+            background-color: #BA68C8;
+            color: white;
+            font-weight: bold;
+        }
+
+        .calendar-day.is-meeting:hover {
+            opacity: 0.85;
+        }
+
         .diary-marker {
             display: none;
         }
@@ -902,10 +912,18 @@
                     classes += ' today';
                 }
 
-                // 见面日优先显示粉色背景
+                // 见面日显示猫狗图标
+                let meetingIcon = '';
                 if (isMeetingDay) {
-                    classes += ' has-diary';
-                    style = 'style="--diary-color: #BA68C8"';
+                    classes += ' is-meeting';
+                    // 交替显示猫狗
+                    const meetingIndex = meetings.findIndex(m => {
+                        const startStr = m.startDate.split('T')[0];
+                        const endStr = m.endDate.split('T')[0];
+                        const currentStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        return currentStr >= startStr && currentStr <= endStr;
+                    });
+                    meetingIcon = meetingIndex % 2 === 0 ? '🐱' : '🐕';
                 } else if (diaryForDay) {
                     classes += ' has-diary';
                     const color = moodColors[diaryForDay.mood] || defaultMoodColor;
@@ -915,6 +933,7 @@
                 html += `
                     <div class="${classes}" ${style} onclick="goToDiary('${dateStr}')">
                         ${day}
+                        ${isMeetingDay ? meetingIcon : ''}
                         ${specialMarker}
                         ${tooltip ? `<div class="calendar-tooltip">${tooltip}</div>` : ''}
                     </div>
