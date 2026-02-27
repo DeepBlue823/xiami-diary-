@@ -777,6 +777,9 @@
                 return;
             }
 
+            // 按设置日期排序（最新的在前面）
+            diaryData.sort((a, b) => new Date(b.date) - new Date(a.date));
+
             container.innerHTML = diaryData.map(diary => {
                 const date = new Date(diary.date);
                 const dateStr = date.toLocaleDateString('zh-CN', {
