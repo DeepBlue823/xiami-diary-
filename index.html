@@ -116,6 +116,41 @@
             background: #f5e6d3;
         }
 
+        .calendar-day {
+            position: relative;
+        }
+
+        .calendar-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #5d4037;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.75em;
+            white-space: nowrap;
+            z-index: 100;
+            margin-bottom: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .calendar-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #5d4037;
+        }
+
+        .calendar-day:hover .calendar-tooltip {
+            display: block;
+        }
+
         .calendar-day.other-month {
             color: #ccc;
         }
@@ -745,9 +780,17 @@
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
             if (diffDays > 0) {
-                document.getElementById('togetherTime').textContent = `在一起 ${diffDays} 天`;
+                const loveMessages = [
+                    '相爱相伴的第 ${diffDays} 天 💕',
+                    '我们在一起的第 ${diffDays} 天 💗',
+                    '一起走过了 ${diffDays} 个日夜 🌸',
+                    '相恋 ${diffDays} 天啦～ 🥰',
+                    '第 ${diffDays} 天的甜蜜 💖'
+                ];
+                const msg = loveMessages[diffDays % loveMessages.length];
+                document.getElementById('togetherTime').textContent = msg.replace('${diffDays}', diffDays);
             } else {
-                document.getElementById('togetherTime').textContent = '即将在一起';
+                document.getElementById('togetherTime').textContent = '💕 即将开启我们的故事';
             }
         }
 
@@ -806,14 +849,35 @@
                 let classes = 'calendar-day';
                 let style = '';
                 let specialMarker = '';
+                let tooltip = '';
 
                 // 检查特殊日期
                 if (month === girlfriendBirthday.month && day === girlfriendBirthday.day) {
+                    const age = year - 2004;
                     specialMarker = '<span class="special-marker birthday-marker">🎂</span>';
+                    tooltip = `小咪 ${age} 岁生日 🎂`;
                 } else if (month === myBirthday.month && day === myBirthday.day) {
+                    const age = year - 2004;
                     specialMarker = '<span class="special-marker birthday-marker">🎂</span>';
+                    tooltip = `哥哥 ${age} 岁生日 🎂`;
                 } else if (month === anniversary.month && day === anniversary.day) {
+                    const years = year - 2025;
                     specialMarker = '<span class="special-marker anniversary-marker">💕</span>';
+                    tooltip = `在一起 ${years + 1} 周年 💕`;
+                }
+
+                // 检查在一起的倍数天
+                const startDate = new Date('2025-08-29');
+                const currentDateFull = new Date(year, month, day);
+                const diffDays = Math.floor((currentDateFull - startDate) / (1000 * 60 * 60 * 24));
+                if (diffDays > 0 && diffDays % 100 === 0) {
+                    tooltip = `在一起 ${diffDays} 天 💕`;
+                }
+
+                // 如果有日记，添加日记预览
+                if (diaryForDay) {
+                    const preview = diaryForDay.content ? diaryForDay.content.substring(0, 30) + '...' : '无内容';
+                    tooltip = tooltip ? tooltip + '<br>' + preview : preview;
                 }
 
                 if (isCurrentMonth && today.getDate() === day) {
@@ -829,6 +893,7 @@
                     <div class="${classes}" ${style} onclick="goToDiary('${dateStr}')">
                         ${day}
                         ${specialMarker}
+                        ${tooltip ? `<div class="calendar-tooltip">${tooltip}</div>` : ''}
                     </div>
                 `;
             }
