@@ -859,11 +859,15 @@
                     weekday: 'short'
                 });
 
+                const locations = [];
+                if (diary.girlfriendLocation) locations.push(`小咪: ${diary.girlfriendLocation}`);
+                if (diary.myLocation) locations.push(`哥哥: ${diary.myLocation}`);
+                const locationStr = locations.length > 0 ? locations.join(' | ') : '';
+
                 return `
                     <div class="diary-item" data-id="${diary.id}" onclick="viewDiary('${diary.id}')">
                         <div class="date">${dateStr}</div>
-                        ${diary.girlfriendLocation ? `<div class="date" style="font-size: 0.8em;">📍 小咪: ${diary.girlfriendLocation}</div>` : ''}
-                        ${diary.myLocation ? `<div class="date" style="font-size: 0.8em;">📍 哥哥: ${diary.myLocation}</div>` : ''}
+                        ${locationStr ? `<div class="date" style="font-size: 0.8em;">📍 ${locationStr}</div>` : ''}
                         <div class="title">${diary.title}</div>
                         <div class="preview">${diary.content}</div>
                         ${diary.mood ? `<div class="mood">${moodEmojis[diary.mood]}</div>` : ''}
