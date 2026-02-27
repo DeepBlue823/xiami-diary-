@@ -915,15 +915,8 @@
                 // 见面日显示猫狗图标
                 let meetingIcon = '';
                 if (isMeetingDay) {
-                    classes += ' is-meeting';
-                    // 交替显示猫狗
-                    const meetingIndex = meetings.findIndex(m => {
-                        const startStr = m.startDate.split('T')[0];
-                        const endStr = m.endDate.split('T')[0];
-                        const currentStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                        return currentStr >= startStr && currentStr <= endStr;
-                    });
-                    meetingIcon = meetingIndex % 2 === 0 ? '🐱' : '🐕';
+                    // 同时显示猫狗
+                    meetingIcon = '🐱🐕';
                 } else if (diaryForDay) {
                     classes += ' has-diary';
                     const color = moodColors[diaryForDay.mood] || defaultMoodColor;
