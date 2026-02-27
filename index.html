@@ -139,6 +139,29 @@
             display: none;
         }
 
+        /* 特殊日期标记 */
+        .special-marker {
+            position: absolute;
+            bottom: 2px;
+            font-size: 0.6em;
+        }
+
+        .anniversary-marker {
+            color: #FF69B4;
+        }
+
+        .birthday-marker {
+            color: #FFD700;
+        }
+
+        /* 在一起的时间 */
+        .together-time {
+            font-size: 1em;
+            color: #FF69B4;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
         /* 日记列表样式 */
         .diary-list {
             margin-top: 20px;
@@ -629,6 +652,7 @@
         <header>
             <h1>小咪的日记本</h1>
             <div class="date-display" id="currentDate"></div>
+            <div class="together-time" id="togetherTime"></div>
         </header>
 
         <div class="pets">
@@ -714,6 +738,25 @@
             const now = new Date();
             const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
             document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-CN', options);
+
+            // 计算在一起的时间
+            const startDate = new Date('2025-08-29');
+            const diffTime = now - startDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 0) {
+                const years = Math.floor(diffDays / 365);
+                const months = Math.floor((diffDays % 365) / 30);
+                const days = diffDays % 30;
+
+                let timeStr = `在一起 ${diffDays} 天`;
+                if (years > 0 || months > 0) {
+                    timeStr = `在一起 ${years} 年 ${months} 个月`;
+                }
+                document.getElementById('togetherTime').textContent = timeStr;
+            } else {
+                document.getElementById('togetherTime').textContent = '即将在一起';
+            }
         }
 
         // 获取日记列表
@@ -744,6 +787,11 @@
             const today = new Date();
             const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
 
+            // 特殊日期
+            const girlfriendBirthday = { month: 9, day: 1 }; // 10月1日
+            const myBirthday = { month: 7, day: 23 }; // 8月23日
+            const anniversary = { month: 7, day: 29 }; // 8月29日
+
             const container = document.getElementById('calendarDays');
             let html = '';
 
@@ -765,6 +813,17 @@
 
                 let classes = 'calendar-day';
                 let style = '';
+                let specialMarker = '';
+
+                // 检查特殊日期
+                if (month === girlfriendBirthday.month && day === girlfriendBirthday.day) {
+                    specialMarker = '<span class="special-marker birthday-marker">🎂</span>';
+                } else if (month === myBirthday.month && day === myBirthday.day) {
+                    specialMarker = '<span class="special-marker birthday-marker">🎂</span>';
+                } else if (month === anniversary.month && day === anniversary.day) {
+                    specialMarker = '<span class="special-marker anniversary-marker">💕</span>';
+                }
+
                 if (isCurrentMonth && today.getDate() === day) {
                     classes += ' today';
                 }
@@ -777,6 +836,7 @@
                 html += `
                     <div class="${classes}" ${style} onclick="goToDiary('${dateStr}')">
                         ${day}
+                        ${specialMarker}
                     </div>
                 `;
             }
