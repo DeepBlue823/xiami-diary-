@@ -127,14 +127,16 @@
 
         .calendar-day.has-diary {
             font-weight: bold;
+            background-color: var(--diary-color, #8d6e63);
+            color: white;
+        }
+
+        .calendar-day.has-diary:hover {
+            opacity: 0.85;
         }
 
         .diary-marker {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            position: absolute;
-            bottom: 4px;
+            display: none;
         }
 
         /* 日记列表样式 */
@@ -462,21 +464,19 @@
                 });
 
                 let classes = 'calendar-day';
+                let style = '';
                 if (isCurrentMonth && today.getDate() === day) {
                     classes += ' today';
                 }
                 if (diaryForDay) {
                     classes += ' has-diary';
+                    const color = moodColors[diaryForDay.mood] || defaultMoodColor;
+                    style = `style="--diary-color: ${color}"`;
                 }
 
-                const markerStyle = diaryForDay
-                    ? `style="background-color: ${moodColors[diaryForDay.mood] || defaultMoodColor}"`
-                    : '';
-
                 html += `
-                    <div class="${classes}" onclick="goToDiary('${dateStr}')">
+                    <div class="${classes}" ${style} onclick="goToDiary('${dateStr}')">
                         ${day}
-                        ${diaryForDay ? `<span class="diary-marker" ${markerStyle}></span>` : ''}
                     </div>
                 `;
             }
@@ -563,7 +563,7 @@
                         <div class="preview">${diary.content}</div>
                         ${diary.mood ? `<div class="mood">${moodEmojis[diary.mood]}</div>` : ''}
                         <div class="expand-hint">点击展开</div>
-                        <div class="diary-comments" id="comments-${diary.id}" style="display: none;"></div>
+                        <div class="diary-comments" id="comments-${diary.id}" style="display: none;" onclick="event.stopPropagation()"></div>
                     </div>
                 `;
             }).join('');
@@ -620,8 +620,8 @@
         // 渲染评论
         function renderComments(diaryId, comments, container) {
             const commentsHtml = comments.length > 0 ? `
-                <div class="comments-title">评论 (${comments.length})</div>
-                <div class="comment-list">
+                <div class="comments-title" onclick="event.stopPropagation()">评论 (${comments.length})</div>
+                <div class="comment-list" onclick="event.stopPropagation()">
                     ${comments.map(c => `
                         <div class="comment-item">
                             <span class="emoji">${c.emoji || '💬'}</span>
@@ -630,18 +630,18 @@
                         </div>
                     `).join('')}
                 </div>
-            ` : '<div class="comments-title">还没有评论</div>';
+            ` : '<div class="comments-title" onclick="event.stopPropagation()">还没有评论</div>';
 
             container.innerHTML = `
                 ${commentsHtml}
-                <div class="comment-input-wrapper" style="position: relative;">
+                <div class="comment-input-wrapper" style="position: relative;" onclick="event.stopPropagation()">
                     <input type="text" class="comment-input" id="input-${diaryId}"
                            placeholder="添加评论..." onkeypress="handleCommentKeypress(event, ${diaryId})">
-                    <button class="emoji-btn" onclick="toggleEmojiPicker(${diaryId})">😊</button>
+                    <button class="emoji-btn" onclick="event.stopPropagation(); toggleEmojiPicker(${diaryId})">😊</button>
                     <div class="emoji-picker" id="emoji-picker-${diaryId}">
-                        ${commentEmojis.map(e => `<button onclick="selectEmoji('${e}', ${diaryId})">${e}</button>`).join('')}
+                        ${commentEmojis.map(e => `<button onclick="event.stopPropagation(); selectEmoji('${e}', ${diaryId})">${e}</button>`).join('')}
                     </div>
-                    <button class="comment-submit" onclick="submitComment(${diaryId})">发送</button>
+                    <button class="comment-submit" onclick="event.stopPropagation(); submitComment(${diaryId})">发送</button>
                 </div>
             `;
         }
