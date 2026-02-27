@@ -142,8 +142,8 @@
         /* 特殊日期标记 */
         .special-marker {
             position: absolute;
-            bottom: 2px;
-            font-size: 0.6em;
+            bottom: 0;
+            font-size: 1em;
         }
 
         .anniversary-marker {
@@ -745,15 +745,7 @@
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
             if (diffDays > 0) {
-                const years = Math.floor(diffDays / 365);
-                const months = Math.floor((diffDays % 365) / 30);
-                const days = diffDays % 30;
-
-                let timeStr = `在一起 ${diffDays} 天`;
-                if (years > 0 || months > 0) {
-                    timeStr = `在一起 ${years} 年 ${months} 个月`;
-                }
-                document.getElementById('togetherTime').textContent = timeStr;
+                document.getElementById('togetherTime').textContent = `在一起 ${diffDays} 天`;
             } else {
                 document.getElementById('togetherTime').textContent = '即将在一起';
             }
