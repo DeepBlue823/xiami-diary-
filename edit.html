@@ -124,6 +124,49 @@
             transform: scale(1.15);
         }
 
+        .writer-btn {
+            width: auto;
+            padding: 0 20px;
+            border-radius: 25px;
+            font-size: 1em;
+        }
+
+        .writer-btn.selected {
+            background: #FF69B4;
+            color: white;
+            border-color: #FF69B4;
+        }
+
+        .edit-btn {
+            background: none;
+            border: none;
+            color: #8d6e63;
+            cursor: pointer;
+            font-size: 0.9em;
+            padding: 5px 10px;
+            margin-right: 5px;
+            transition: color 0.3s;
+        }
+
+        .edit-btn:hover {
+            color: #5d4037;
+        }
+
+        .diary-item .meta-info {
+            display: flex;
+            gap: 10px;
+            font-size: 0.8em;
+            color: #8d6e63;
+            margin-top: 5px;
+        }
+
+        .diary-item .writer-badge {
+            background: #FF69B4;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
         .btn-group {
             display: flex;
             gap: 15px;
@@ -385,6 +428,19 @@
             </div>
 
             <div class="input-group">
+                <label>作者</label>
+                <div class="mood-selector">
+                    <button class="mood-btn writer-btn" data-writer="girlfriend" title="小咪">小咪</button>
+                    <button class="mood-btn writer-btn" data-writer="me" title="哥哥">哥哥</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="diaryLocation">所在地</label>
+                <input type="text" id="diaryLocation" placeholder="在哪里写的日记呢？">
+            </div>
+
+            <div class="input-group">
                 <label for="diaryContent">今日记录</label>
                 <textarea id="diaryContent" placeholder="今天发生了什么有趣的事情呢？"></textarea>
             </div>
@@ -475,19 +531,33 @@
 
         // 心情选择
         let selectedMood = null;
-        document.querySelectorAll('.mood-btn').forEach(btn => {
+        let selectedWriter = 'girlfriend';
+
+        document.querySelectorAll('.mood-btn:not(.writer-btn)').forEach(btn => {
             btn.addEventListener('click', function() {
-                document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+                document.querySelectorAll('.mood-btn:not(.writer-btn)').forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedMood = this.dataset.mood;
             });
         });
 
-        // 保存日记
+        // 作者选择
+        document.querySelectorAll('.writer-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.writer-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedWriter = this.dataset.writer;
+            });
+        });
+
+        // 保存/更新日记
+        let editingId = null;
+
         async function saveDiary() {
             const title = document.getElementById('diaryTitle').value.trim();
             const content = document.getElementById('diaryContent').value.trim();
             const dateInput = document.getElementById('diaryDate').value;
+            const location = document.getElementById('diaryLocation').value.trim();
 
             if (!title && !content) {
                 showToast('请写点什么吧～');
@@ -495,19 +565,38 @@
             }
 
             try {
-                const response = await fetch('/api/diaries', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({
-                        title: title || '无标题',
-                        content: content,
-                        mood: selectedMood,
-                        date: dateInput || null
-                    })
-                });
+                const body = {
+                    title: title || '无标题',
+                    content: content,
+                    mood: selectedMood,
+                    date: dateInput || null,
+                    writer: selectedWriter,
+                    location: location || null
+                };
+
+                let response;
+                if (editingId) {
+                    // 更新现有日记
+                    body.id = editingId;
+                    response = await fetch('/api/diaries', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify(body)
+                    });
+                } else {
+                    // 新建日记
+                    response = await fetch('/api/diaries', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify(body)
+                    });
+                }
 
                 const data = await response.json();
 
@@ -523,13 +612,58 @@
             }
         }
 
+        // 编辑日记
+        function editDiary(id) {
+            const diaries = JSON.parse(document.getElementById('diaryListContent').dataset.diaries || '[]');
+            const diary = diaries.find(d => d.id == id);
+            if (!diary) return;
+
+            // 填充表单
+            document.getElementById('diaryTitle').value = diary.title || '';
+            document.getElementById('diaryContent').value = diary.content || '';
+            document.getElementById('diaryDate').value = diary.date ? diary.date.split('T')[0] : '';
+            document.getElementById('diaryLocation').value = diary.location || '';
+
+            // 设置心情
+            document.querySelectorAll('.mood-btn:not(.writer-btn)').forEach(b => b.classList.remove('selected'));
+            if (diary.mood) {
+                const moodBtn = document.querySelector(`.mood-btn[data-mood="${diary.mood}"]`);
+                if (moodBtn) {
+                    moodBtn.classList.add('selected');
+                    selectedMood = diary.mood;
+                }
+            } else {
+                selectedMood = null;
+            }
+
+            // 设置作者
+            document.querySelectorAll('.writer-btn').forEach(b => b.classList.remove('selected'));
+            const writer = diary.writer || 'girlfriend';
+            const writerBtn = document.querySelector(`.writer-btn[data-writer="${writer}"]`);
+            if (writerBtn) {
+                writerBtn.classList.add('selected');
+                selectedWriter = writer;
+            }
+
+            editingId = id;
+
+            // 滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // 更改按钮文字
+            document.querySelector('.btn-primary').textContent = '更新日记';
+        }
+
         // 清空表单
         function clearForm() {
             document.getElementById('diaryTitle').value = '';
             document.getElementById('diaryDate').value = '';
             document.getElementById('diaryContent').value = '';
+            document.getElementById('diaryLocation').value = '';
             document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
             selectedMood = null;
+            editingId = null;
+            document.querySelector('.btn-primary').textContent = '保存日记';
         }
 
         // 显示提示
@@ -563,6 +697,9 @@
                 return;
             }
 
+            // 按日期排序
+            diaries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
             const moodEmojis = {
                 happy: '😊',
                 love: '😍',
@@ -581,14 +718,22 @@
                     weekday: 'short'
                 });
 
+                const writerName = diary.writer === 'me' ? '哥哥' : '小咪';
+
                 return `
-                    <div class="diary-item" data-id="${diary.id}" onclick="viewDiary('${diary.id}')">
-                        <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary(${diary.id})">×</button>
+                    <div class="diary-item" data-id="${diary.id}">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <button class="edit-btn" onclick="event.stopPropagation(); editDiary(${diary.id})">编辑</button>
+                            <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary(${diary.id})">×</button>
+                        </div>
                         <div class="date">${dateStr}</div>
                         <div class="title">${diary.title}</div>
                         <div class="preview">${diary.content}</div>
                         ${diary.mood ? `<div class="mood">${moodEmojis[diary.mood]}</div>` : ''}
-                        <div class="expand-hint">点击展开</div>
+                        <div class="meta-info">
+                            <span class="writer-badge">${writerName}</span>
+                            ${diary.location ? `<span>📍 ${diary.location}</span>` : ''}
+                        </div>
                     </div>
                 `;
             }).join('');

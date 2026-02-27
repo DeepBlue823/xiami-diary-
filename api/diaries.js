@@ -64,26 +64,47 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: '登录已过期，请重新登录' });
   }
 
-  // 保存日记
+  // 保存/更新日记
   if (req.method === 'POST') {
-    const { title, content, mood, date } = req.body;
+    const { id, title, content, mood, date, writer, location } = req.body;
 
     if (!title && !content) {
       return res.status(400).json({ error: '内容不能为空' });
     }
 
     const diariesJson = await redis.get('diaries') || '[]';
-    const diaries = JSON.parse(diariesJson);
+    let diaries = JSON.parse(diariesJson);
 
     // 如果提供了自定义日期，使用它；否则使用当前日期
     const diaryDate = date ? new Date(date).toISOString() : new Date().toISOString();
 
+    // 如果有id，说明是更新现有日记
+    if (id) {
+      const index = diaries.findIndex(d => d.id === id);
+      if (index !== -1) {
+        diaries[index] = {
+          ...diaries[index],
+          title: title || '无标题',
+          content: content,
+          mood: mood || null,
+          date: diaryDate,
+          writer: writer || 'girlfriend',
+          location: location || null
+        };
+        await redis.set('diaries', JSON.stringify(diaries));
+        return res.json({ success: true, diary: diaries[index] });
+      }
+    }
+
+    // 新建日记
     const newDiary = {
       id: Date.now(),
       date: diaryDate,
       title: title || '无标题',
       content: content,
-      mood: mood || null
+      mood: mood || null,
+      writer: writer || 'girlfriend',
+      location: location || null
     };
 
     diaries.unshift(newDiary);
