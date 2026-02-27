@@ -859,15 +859,11 @@
                     weekday: 'short'
                 });
 
-                const writerName = diary.writer === 'me' ? '哥哥' : '小咪';
-                const writerBadge = diary.writer === 'me'
-                    ? '<span class="user-badge me" style="font-size: 0.7em;">哥哥</span>'
-                    : '<span class="user-badge girlfriend" style="font-size: 0.7em;">小咪</span>';
-
                 return `
                     <div class="diary-item" data-id="${diary.id}" onclick="viewDiary('${diary.id}')">
-                        <div class="date">${dateStr} ${writerBadge}</div>
-                        ${diary.location ? `<div class="date" style="font-size: 0.8em;">📍 ${diary.location}</div>` : ''}
+                        <div class="date">${dateStr}</div>
+                        ${diary.girlfriendLocation ? `<div class="date" style="font-size: 0.8em;">📍 小咪: ${diary.girlfriendLocation}</div>` : ''}
+                        ${diary.myLocation ? `<div class="date" style="font-size: 0.8em;">📍 哥哥: ${diary.myLocation}</div>` : ''}
                         <div class="title">${diary.title}</div>
                         <div class="preview">${diary.content}</div>
                         ${diary.mood ? `<div class="mood">${moodEmojis[diary.mood]}</div>` : ''}

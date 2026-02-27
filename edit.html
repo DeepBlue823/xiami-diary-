@@ -428,16 +428,13 @@
             </div>
 
             <div class="input-group">
-                <label>作者</label>
-                <div class="mood-selector">
-                    <button class="mood-btn writer-btn" data-writer="girlfriend" title="小咪">小咪</button>
-                    <button class="mood-btn writer-btn" data-writer="me" title="哥哥">哥哥</button>
-                </div>
+                <label for="girlfriendLocation">小咪所在地</label>
+                <input type="text" id="girlfriendLocation" placeholder="小咪现在在哪里呢？">
             </div>
 
             <div class="input-group">
-                <label for="diaryLocation">所在地</label>
-                <input type="text" id="diaryLocation" placeholder="在哪里写的日记呢？">
+                <label for="myLocation">我的所在地</label>
+                <input type="text" id="myLocation" placeholder="我现在在哪里呢？">
             </div>
 
             <div class="input-group">
@@ -531,22 +528,12 @@
 
         // 心情选择
         let selectedMood = null;
-        let selectedWriter = 'girlfriend';
 
-        document.querySelectorAll('.mood-btn:not(.writer-btn)').forEach(btn => {
+        document.querySelectorAll('.mood-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                document.querySelectorAll('.mood-btn:not(.writer-btn)').forEach(b => b.classList.remove('selected'));
+                document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedMood = this.dataset.mood;
-            });
-        });
-
-        // 作者选择
-        document.querySelectorAll('.writer-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.writer-btn').forEach(b => b.classList.remove('selected'));
-                this.classList.add('selected');
-                selectedWriter = this.dataset.writer;
             });
         });
 
@@ -557,7 +544,8 @@
             const title = document.getElementById('diaryTitle').value.trim();
             const content = document.getElementById('diaryContent').value.trim();
             const dateInput = document.getElementById('diaryDate').value;
-            const location = document.getElementById('diaryLocation').value.trim();
+            const girlfriendLocation = document.getElementById('girlfriendLocation').value.trim();
+            const myLocation = document.getElementById('myLocation').value.trim();
 
             if (!title && !content) {
                 showToast('请写点什么吧～');
@@ -570,8 +558,8 @@
                     content: content,
                     mood: selectedMood,
                     date: dateInput || null,
-                    writer: selectedWriter,
-                    location: location || null
+                    girlfriendLocation: girlfriendLocation || null,
+                    myLocation: myLocation || null
                 };
 
                 let response;
@@ -622,10 +610,11 @@
             document.getElementById('diaryTitle').value = diary.title || '';
             document.getElementById('diaryContent').value = diary.content || '';
             document.getElementById('diaryDate').value = diary.date ? diary.date.split('T')[0] : '';
-            document.getElementById('diaryLocation').value = diary.location || '';
+            document.getElementById('girlfriendLocation').value = diary.girlfriendLocation || '';
+            document.getElementById('myLocation').value = diary.myLocation || '';
 
             // 设置心情
-            document.querySelectorAll('.mood-btn:not(.writer-btn)').forEach(b => b.classList.remove('selected'));
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
             if (diary.mood) {
                 const moodBtn = document.querySelector(`.mood-btn[data-mood="${diary.mood}"]`);
                 if (moodBtn) {
@@ -634,15 +623,6 @@
                 }
             } else {
                 selectedMood = null;
-            }
-
-            // 设置作者
-            document.querySelectorAll('.writer-btn').forEach(b => b.classList.remove('selected'));
-            const writer = diary.writer || 'girlfriend';
-            const writerBtn = document.querySelector(`.writer-btn[data-writer="${writer}"]`);
-            if (writerBtn) {
-                writerBtn.classList.add('selected');
-                selectedWriter = writer;
             }
 
             editingId = id;
@@ -659,7 +639,8 @@
             document.getElementById('diaryTitle').value = '';
             document.getElementById('diaryDate').value = '';
             document.getElementById('diaryContent').value = '';
-            document.getElementById('diaryLocation').value = '';
+            document.getElementById('girlfriendLocation').value = '';
+            document.getElementById('myLocation').value = '';
             document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
             selectedMood = null;
             editingId = null;
@@ -718,8 +699,6 @@
                     weekday: 'short'
                 });
 
-                const writerName = diary.writer === 'me' ? '哥哥' : '小咪';
-
                 return `
                     <div class="diary-item" data-id="${diary.id}">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -731,8 +710,8 @@
                         <div class="preview">${diary.content}</div>
                         ${diary.mood ? `<div class="mood">${moodEmojis[diary.mood]}</div>` : ''}
                         <div class="meta-info">
-                            <span class="writer-badge">${writerName}</span>
-                            ${diary.location ? `<span>📍 ${diary.location}</span>` : ''}
+                            ${diary.girlfriendLocation ? `<span>📍 小咪: ${diary.girlfriendLocation}</span>` : ''}
+                            ${diary.myLocation ? `<span>📍 哥哥: ${diary.myLocation}</span>` : ''}
                         </div>
                     </div>
                 `;
