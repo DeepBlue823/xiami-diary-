@@ -30,7 +30,7 @@ export default async function handler(req, res) {
 
   // 添加评论不需要严格验证（可以匿名评论），或者可以添加简单验证
   if (action === 'addComment') {
-    const { diaryId, content, emoji } = req.body;
+    const { diaryId, content, emoji, user } = req.body;
 
     if (!diaryId || !content) {
       return res.status(400).json({ error: '内容不能为空' });
@@ -44,6 +44,7 @@ export default async function handler(req, res) {
       diaryId: diaryId,
       content: content,
       emoji: emoji || '💬',
+      user: user || 'girlfriend',
       createdAt: new Date().toISOString()
     };
 

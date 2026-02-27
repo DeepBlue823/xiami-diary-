@@ -251,6 +251,56 @@
             font-size: 0.75em;
         }
 
+        .comment-item .user-badge {
+            font-size: 0.7em;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-right: 5px;
+        }
+
+        .comment-item .user-badge.me {
+            background: #FFD700;
+            color: #5d4037;
+        }
+
+        .comment-item .user-badge.girlfriend {
+            background: #FF69B4;
+            color: white;
+        }
+
+        .user-selector {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+
+        .user-selector button {
+            padding: 4px 12px;
+            border: 2px solid #d4c4b5;
+            background: white;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s;
+        }
+
+        .user-selector button.active {
+            border-color: #FF69B4;
+            background: #FF69B4;
+            color: white;
+        }
+
+        .user-selector button.girlfriend.active {
+            border-color: #FF69B4;
+            background: #FF69B4;
+        }
+
+        .user-selector button.me.active {
+            border-color: #FFD700;
+            background: #FFD700;
+            color: #5d4037;
+        }
+
         .comment-input-wrapper {
             display: flex;
             align-items: center;
@@ -636,6 +686,7 @@
         let currentMonth = new Date().getMonth();
         let diaries = [];
         let selectedEmoji = '';
+        let currentUser = localStorage.getItem('commentUser') || 'girlfriend';
 
         const commentEmojis = ['💕', '👍', '❤️', '😍', '😂', '🎉', '😢', '👏'];
 
@@ -852,11 +903,21 @@
 
         // 渲染评论
         function renderComments(diaryId, comments, container) {
+            const getUserBadge = (user) => {
+                if (user === 'me') {
+                    return '<span class="user-badge me">老公</span>';
+                } else if (user === 'girlfriend') {
+                    return '<span class="user-badge girlfriend">小咪</span>';
+                }
+                return '';
+            };
+
             const commentsHtml = comments.length > 0 ? `
                 <div class="comments-title" onclick="event.stopPropagation()">评论 (${comments.length})</div>
                 <div class="comment-list" onclick="event.stopPropagation()">
                     ${comments.map(c => `
                         <div class="comment-item">
+                            ${getUserBadge(c.user)}
                             <span class="emoji">${c.emoji || '💬'}</span>
                             <span class="content">${c.content}</span>
                             <span class="time">${new Date(c.createdAt).toLocaleDateString('zh-CN')}</span>
@@ -867,6 +928,10 @@
 
             container.innerHTML = `
                 ${commentsHtml}
+                <div class="user-selector" onclick="event.stopPropagation()">
+                    <button class="girlfriend ${currentUser === 'girlfriend' ? 'active' : ''}" onclick="selectUser('girlfriend')">小咪</button>
+                    <button class="me ${currentUser === 'me' ? 'active' : ''}" onclick="selectUser('me')">老公</button>
+                </div>
                 <div class="comment-input-wrapper" style="position: relative;" onclick="event.stopPropagation()">
                     <input type="text" class="comment-input" id="input-${diaryId}"
                            placeholder="添加评论..." onkeypress="handleCommentKeypress(event, ${diaryId})">
@@ -877,6 +942,18 @@
                     <button class="comment-submit" onclick="event.stopPropagation(); submitComment(${diaryId})">发送</button>
                 </div>
             `;
+        }
+
+        // 选择评论用户
+        function selectUser(user) {
+            currentUser = user;
+            localStorage.setItem('commentUser', user);
+
+            // 更新按钮状态
+            document.querySelectorAll('.user-selector button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.user-selector button.${user}`).classList.add('active');
         }
 
         // 切换表情选择器
@@ -912,7 +989,8 @@
                         action: 'addComment',
                         diaryId: diaryId,
                         content: content,
-                        emoji: selectedEmoji || '💬'
+                        emoji: selectedEmoji || '💬',
+                        user: currentUser
                     })
                 });
 
