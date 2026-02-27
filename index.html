@@ -905,7 +905,7 @@
         function renderComments(diaryId, comments, container) {
             const getUserBadge = (user) => {
                 if (user === 'me') {
-                    return '<span class="user-badge me">老公</span>';
+                    return '<span class="user-badge me">哥哥</span>';
                 } else if (user === 'girlfriend') {
                     return '<span class="user-badge girlfriend">小咪</span>';
                 }
@@ -930,7 +930,7 @@
                 ${commentsHtml}
                 <div class="user-selector" onclick="event.stopPropagation()">
                     <button class="girlfriend ${currentUser === 'girlfriend' ? 'active' : ''}" onclick="selectUser('girlfriend')">小咪</button>
-                    <button class="me ${currentUser === 'me' ? 'active' : ''}" onclick="selectUser('me')">老公</button>
+                    <button class="me ${currentUser === 'me' ? 'active' : ''}" onclick="selectUser('me')">哥哥</button>
                 </div>
                 <div class="comment-input-wrapper" style="position: relative;" onclick="event.stopPropagation()">
                     <input type="text" class="comment-input" id="input-${diaryId}"
