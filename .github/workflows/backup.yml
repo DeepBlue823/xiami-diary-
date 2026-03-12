@@ -1,0 +1,62 @@
+name: 日记数据自动备份
+
+on:
+  schedule:
+    # 每天北京时间 03:00 执行（UTC 19:00）
+    - cron: '0 19 * * *'
+  workflow_dispatch: # 允许手动触发
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 拉取仓库
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 获取日记数据
+        run: |
+          mkdir -p backups
+          DATE=$(TZ='Asia/Shanghai' date +%Y-%m-%d)
+
+          echo "正在备份日期: $DATE"
+
+          # 备份日记列表
+          curl -sf "${{ secrets.DIARY_URL }}/api/diaries" -o backups/diaries-${DATE}.json \
+            && echo "✅ 日记备份成功" \
+            || echo "❌ 日记备份失败"
+
+          # 备份见面日期
+          curl -sf "${{ secrets.DIARY_URL }}/api/diaries?action=meetings" -o backups/meetings-${DATE}.json \
+            && echo "✅ 见面日期备份成功" \
+            || echo "❌ 见面日期备份失败"
+
+          # 同时更新 latest 文件（方便快速查看最新数据）
+          cp backups/diaries-${DATE}.json backups/latest-diaries.json
+          cp backups/meetings-${DATE}.json backups/latest-meetings.json
+
+      - name: 只保留最近 60 天的备份
+        run: |
+          cd backups
+          ls -t diaries-*.json 2>/dev/null | tail -n +61 | xargs -r rm
+          ls -t meetings-*.json 2>/dev/null | tail -n +61 | xargs -r rm
+
+      - name: 提交备份
+        run: |
+          git config user.name "自动备份机器人"
+          git config user.email "backup-bot@xiami-diary.com"
+          git add backups/
+          if git diff --staged --quiet; then
+            echo "数据无变化，跳过提交"
+          else
+            DATE=$(TZ='Asia/Shanghai' date +%Y-%m-%d)
+            COUNT=$(cat backups/latest-diaries.json | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "?")
+            git commit -m "🗄️ 自动备份 ${DATE}（共 ${COUNT} 篇日记）"
+            git push
+            echo "✅ 备份已提交到仓库"
+          fi
