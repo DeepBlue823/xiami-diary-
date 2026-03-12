@@ -230,6 +230,7 @@
             border-left: 4px solid #f48fb1;
             cursor: pointer;
             transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
         }
 
         .diary-item:hover {
@@ -757,6 +758,7 @@
 
                 return `
                     <div class="diary-item" data-id="${diary.id}">
+                        ${diaryCardFlowers()}
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <button class="edit-btn" onclick="event.stopPropagation(); editDiary(${diary.id})">编辑</button>
                             <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary(${diary.id})">×</button>
@@ -966,48 +968,23 @@
             }
         }
 
-        // 油菜花边框装饰
-        function createRapeseedBorder() {
-            const yellowColors = ['#FFD700', '#FFC107', '#FFB300', '#FFCA28', '#FFE57F'];
-            ['left', 'right'].forEach(side => {
-                for (let i = 0; i < 12; i++) {
-                    const topVh = (i / 12) * 92 + Math.random() * 6;
-                    const edgePx = Math.random() * 40 + 5;
-                    const color = yellowColors[Math.floor(Math.random() * yellowColors.length)];
-                    const size = Math.random() * 10 + 20;
-
-                    const flower = document.createElement('div');
-                    flower.style.cssText = `position:fixed;pointer-events:none;z-index:0;top:${topVh}vh;${side}:${edgePx}px;`;
-                    flower.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                        <g transform="translate(20,20)">
-                            <ellipse cx="0" cy="-9" rx="5" ry="7.5" fill="${color}" transform="rotate(0)"/>
-                            <ellipse cx="0" cy="-9" rx="5" ry="7.5" fill="${color}" transform="rotate(90)"/>
-                            <ellipse cx="0" cy="-9" rx="5" ry="7.5" fill="${color}" transform="rotate(180)"/>
-                            <ellipse cx="0" cy="-9" rx="5" ry="7.5" fill="${color}" transform="rotate(270)"/>
-                            <circle cx="0" cy="0" r="3.5" fill="#E65100"/>
-                        </g>
-                    </svg>`;
-                    document.body.appendChild(flower);
-
-                    if (Math.random() > 0.35) {
-                        const leaf = document.createElement('div');
-                        const leafW = Math.random() * 8 + 12;
-                        const leafH = leafW * 1.6;
-                        const rotate = Math.random() * 40 - 20;
-                        leaf.style.cssText = `position:fixed;pointer-events:none;z-index:0;top:${topVh + Math.random() * 3}vh;${side}:${edgePx + 22 + Math.random() * 18}px;`;
-                        leaf.innerHTML = `<svg width="${leafW}" height="${leafH}" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg">
-                            <ellipse cx="10" cy="16" rx="7" ry="13" fill="#66BB6A" opacity="0.85" transform="rotate(${rotate},10,16)"/>
-                            <line x1="10" y1="4" x2="10" y2="28" stroke="#43A047" stroke-width="1" opacity="0.6"/>
-                        </svg>`;
-                        document.body.appendChild(leaf);
-                    }
-                }
-            });
+        // 日记卡片油菜花角落装饰
+        function diaryCardFlowers() {
+            const y = ['#FFD700','#FFC107','#FFB300','#FFCA28','#FFE57F'];
+            const r = () => y[Math.floor(Math.random() * y.length)];
+            const f = (s, c) => `<svg width="${s}" height="${s}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g transform="translate(20,20)"><ellipse cx="0" cy="-9" rx="5" ry="7.5" fill="${c}" transform="rotate(0)"/><ellipse cx="0" cy="-9" rx="5" ry="7.5" fill="${c}" transform="rotate(90)"/><ellipse cx="0" cy="-9" rx="5" ry="7.5" fill="${c}" transform="rotate(180)"/><ellipse cx="0" cy="-9" rx="5" ry="7.5" fill="${c}" transform="rotate(270)"/><circle cx="0" cy="0" r="3.5" fill="#E65100"/></g></svg>`;
+            const leaf = (rot) => `<svg width="11" height="17" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg"><ellipse cx="10" cy="16" rx="6" ry="13" fill="#66BB6A" opacity="0.85" transform="rotate(${rot},10,16)"/><line x1="10" y1="4" x2="10" y2="28" stroke="#43A047" stroke-width="1.2" opacity="0.6"/></svg>`;
+            return `
+                <div style="position:absolute;top:-14px;right:10px;display:flex;align-items:flex-end;gap:2px;pointer-events:none;">
+                    ${leaf(-15)}${f(13,r())}${f(20,r())}${f(14,r())}${leaf(15)}
+                </div>
+                <div style="position:absolute;bottom:-14px;left:8px;display:flex;align-items:flex-end;gap:2px;pointer-events:none;">
+                    ${leaf(-10)}${f(15,r())}${f(19,r())}${f(13,r())}${leaf(12)}
+                </div>`;
         }
 
         // 初始化
         createSakuraPetals();
-        createRapeseedBorder();
         updateDate();
         checkAuth().then(isLoggedIn => {
             if (isLoggedIn) {
