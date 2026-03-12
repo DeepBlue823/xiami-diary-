@@ -13,14 +13,17 @@
 
         body {
             font-family: "Noto Serif SC", "STSong", "SimSun", serif;
-            background: linear-gradient(135deg, #f5e6d3 0%, #e8d4bc 50%, #dcc9b6 100%);
+            background: linear-gradient(135deg, #fff5f8 0%, #fce4ec 45%, #f3f8f0 100%);
             min-height: 100vh;
             padding: 20px;
+            overflow-x: hidden;
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
 
         header {
@@ -30,27 +33,25 @@
 
         h1 {
             font-size: 2.5em;
-            color: #5d4037;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            color: #8b3a5a;
+            text-shadow: 2px 2px 6px rgba(139, 58, 90, 0.15);
             letter-spacing: 0.2em;
             margin-bottom: 10px;
         }
 
         .date-display {
             font-size: 1.2em;
-            color: #8d6e63;
+            color: #b05070;
             font-style: italic;
         }
 
         .diary-card {
-            background: #fffef8;
-            border-radius: 8px;
-            box-shadow:
-                0 4px 15px rgba(93, 64, 55, 0.15),
-                inset 0 0 50px rgba(139, 109, 95, 0.05);
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(240, 100, 140, 0.15);
             padding: 40px;
             position: relative;
-            border: 1px solid #d4c4b5;
+            border: 1px solid #fad4e0;
         }
 
 
@@ -61,7 +62,7 @@
         label {
             display: block;
             font-size: 1.1em;
-            color: #5d4037;
+            color: #8b3a5a;
             margin-bottom: 10px;
             font-weight: bold;
         }
@@ -71,12 +72,12 @@
         textarea {
             width: 100%;
             padding: 15px;
-            border: 2px solid #d4c4b5;
-            border-radius: 8px;
+            border: 2px solid #f8c8d8;
+            border-radius: 10px;
             font-size: 1.1em;
             font-family: inherit;
-            background: #fffef8;
-            color: #3e2723;
+            background: #fffafb;
+            color: #7a2050;
             transition: border-color 0.3s, box-shadow 0.3s;
         }
 
@@ -84,8 +85,8 @@
         input[type="date"]:focus,
         textarea:focus {
             outline: none;
-            border-color: #8d6e63;
-            box-shadow: 0 0 10px rgba(141, 110, 99, 0.2);
+            border-color: #f48fb1;
+            box-shadow: 0 0 10px rgba(244, 143, 177, 0.25);
         }
 
         textarea {
@@ -104,8 +105,8 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            border: 3px solid #d4c4b5;
-            background: #fffef8;
+            border: 3px solid #f8c8d8;
+            background: #fffafb;
             font-size: 1.5em;
             cursor: pointer;
             transition: all 0.3s;
@@ -119,8 +120,8 @@
         }
 
         .mood-btn.selected {
-            border-color: #8d6e63;
-            background: #f5e6d3;
+            border-color: #f48fb1;
+            background: #fce4ec;
             transform: scale(1.15);
         }
 
@@ -140,7 +141,7 @@
         .edit-btn {
             background: none;
             border: none;
-            color: #8d6e63;
+            color: #c07090;
             cursor: pointer;
             font-size: 0.9em;
             padding: 5px 10px;
@@ -149,14 +150,14 @@
         }
 
         .edit-btn:hover {
-            color: #5d4037;
+            color: #8b3a5a;
         }
 
         .diary-item .meta-info {
             display: flex;
             gap: 10px;
             font-size: 0.8em;
-            color: #8d6e63;
+            color: #c07090;
             margin-top: 5px;
         }
 
@@ -185,25 +186,26 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #8d6e63, #6d4c41);
+            background: linear-gradient(135deg, #f48fb1, #e07090);
             color: #fff;
-            box-shadow: 0 4px 15px rgba(109, 76, 65, 0.3);
+            box-shadow: 0 4px 15px rgba(240, 100, 140, 0.3);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(109, 76, 65, 0.4);
+            box-shadow: 0 6px 20px rgba(240, 100, 140, 0.4);
+            background: linear-gradient(135deg, #e07090, #c85070);
         }
 
         .btn-secondary {
             background: #fff;
-            color: #5d4037;
-            border: 2px solid #d4c4b5;
+            color: #8b3a5a;
+            border: 2px solid #f8c8d8;
         }
 
         .btn-secondary:hover {
-            background: #f5e6d3;
-            border-color: #8d6e63;
+            background: #fce4ec;
+            border-color: #f48fb1;
         }
 
         .diary-list {
@@ -211,44 +213,45 @@
         }
 
         .diary-list h2 {
-            color: #5d4037;
+            color: #8b3a5a;
             font-size: 1.5em;
             margin-bottom: 20px;
             text-align: center;
-            border-bottom: 2px solid #d4c4b5;
+            border-bottom: 2px solid #f8c8d8;
             padding-bottom: 10px;
         }
 
         .diary-item {
-            background: #fffef8;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
             padding: 20px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 10px rgba(93, 64, 55, 0.1);
-            border-left: 4px solid #8d6e63;
+            box-shadow: 0 2px 12px rgba(240, 100, 140, 0.1);
+            border-left: 4px solid #f48fb1;
             cursor: pointer;
-            transition: transform 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
         }
 
         .diary-item:hover {
             transform: translateX(5px);
+            box-shadow: 0 4px 20px rgba(240, 100, 140, 0.2);
         }
 
         .diary-item .date {
-            color: #8d6e63;
+            color: #c07090;
             font-size: 0.9em;
             margin-bottom: 8px;
         }
 
         .diary-item .title {
-            color: #3e2723;
+            color: #7a2050;
             font-size: 1.2em;
             font-weight: bold;
             margin-bottom: 8px;
         }
 
         .diary-item .preview {
-            color: #5d4037;
+            color: #9a5070;
             font-size: 0.95em;
             line-height: 1.5;
             display: -webkit-box;
@@ -263,7 +266,7 @@
         }
 
         .diary-item .expand-hint {
-            color: #8d6e63;
+            color: #c07090;
             font-size: 0.85em;
             text-align: right;
             margin-top: 8px;
@@ -279,7 +282,7 @@
             float: right;
             background: none;
             border: none;
-            color: #a1887f;
+            color: #e0b0c0;
             cursor: pointer;
             font-size: 1.2em;
             padding: 5px;
@@ -295,11 +298,11 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%) translateY(-100px);
-            background: #5d4037;
+            background: linear-gradient(135deg, #f48fb1, #e07090);
             color: #fff;
             padding: 15px 30px;
             border-radius: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(240, 100, 140, 0.35);
             transition: transform 0.5s;
             z-index: 1000;
         }
@@ -310,7 +313,7 @@
 
         .empty-state {
             text-align: center;
-            color: #8d6e63;
+            color: #c07090;
             padding: 40px;
             font-style: italic;
         }
@@ -322,7 +325,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(93, 64, 55, 0.8);
+            background: rgba(139, 58, 90, 0.75);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -330,24 +333,26 @@
         }
 
         .login-box {
-            background: #fffef8;
+            background: rgba(255, 255, 255, 0.97);
             padding: 40px;
-            border-radius: 15px;
+            border-radius: 20px;
             text-align: center;
             max-width: 400px;
             width: 90%;
+            border: 1px solid #fad4e0;
+            box-shadow: 0 8px 30px rgba(240, 100, 140, 0.2);
         }
 
         .login-box h2 {
-            color: #5d4037;
+            color: #8b3a5a;
             margin-bottom: 20px;
         }
 
         .login-box input {
             width: 100%;
             padding: 15px;
-            border: 2px solid #d4c4b5;
-            border-radius: 8px;
+            border: 2px solid #f8c8d8;
+            border-radius: 10px;
             font-size: 1.1em;
             margin-bottom: 20px;
         }
@@ -367,12 +372,53 @@
             top: 20px;
             right: 20px;
             padding: 10px 20px;
-            background: #fff;
-            border: 2px solid #d4c4b5;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #f8c8d8;
             border-radius: 20px;
             cursor: pointer;
             font-family: inherit;
-            color: #5d4037;
+            color: #8b3a5a;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .logout-btn:hover {
+            background: #fce4ec;
+            border-color: #f48fb1;
+        }
+
+        /* 樱花花瓣飘落动画 */
+        @keyframes petalFall {
+            0% {
+                transform: translateY(-30px) rotate(0deg) translateX(0px);
+                opacity: 0.9;
+            }
+            20% { transform: translateY(20vh) rotate(72deg) translateX(25px); }
+            40% { transform: translateY(40vh) rotate(144deg) translateX(-15px); }
+            60% { transform: translateY(60vh) rotate(216deg) translateX(20px); }
+            80% { transform: translateY(80vh) rotate(288deg) translateX(-10px); }
+            100% {
+                transform: translateY(108vh) rotate(360deg) translateX(0px);
+                opacity: 0;
+            }
+        }
+
+        .sakura-petal {
+            position: fixed;
+            top: 0;
+            pointer-events: none;
+            z-index: 0;
+            animation: petalFall linear infinite;
+        }
+
+        .sakura-petal::before {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            border-radius: 0 50% 50% 50%;
+            transform: rotate(45deg);
         }
 
         @media (max-width: 600px) {
@@ -450,7 +496,7 @@
 
         <!-- 见面日期管理 -->
         <div class="diary-card" style="margin-top: 30px;">
-            <h2 style="color: #5d4037; font-size: 1.3em; margin-bottom: 20px; text-align: center;">见面日期管理</h2>
+            <h2 style="color: #8b3a5a; font-size: 1.3em; margin-bottom: 20px; text-align: center;">见面日期管理</h2>
 
             <div class="input-group">
                 <label>添加见面日期</label>
@@ -896,7 +942,26 @@
             }
         }
 
+        // 创建樱花花瓣
+        function createSakuraPetals() {
+            const colors = ['#ffb7c5', '#ffc0cb', '#ffcdd2', '#f8bbd0', '#fce4ec', '#f9a8c0', '#ffb3ba'];
+            for (let i = 0; i < 20; i++) {
+                const petal = document.createElement('div');
+                petal.className = 'sakura-petal';
+                const size = Math.random() * 10 + 8;
+                petal.style.left = Math.random() * 100 + 'vw';
+                petal.style.width = size + 'px';
+                petal.style.height = size + 'px';
+                petal.style.background = colors[Math.floor(Math.random() * colors.length)];
+                petal.style.animationDuration = (Math.random() * 7 + 7) + 's';
+                petal.style.animationDelay = (Math.random() * 10) + 's';
+                petal.style.opacity = (Math.random() * 0.4 + 0.4).toString();
+                document.body.appendChild(petal);
+            }
+        }
+
         // 初始化
+        createSakuraPetals();
         updateDate();
         checkAuth().then(isLoggedIn => {
             if (isLoggedIn) {
