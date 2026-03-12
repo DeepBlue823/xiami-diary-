@@ -13,14 +13,17 @@
 
         body {
             font-family: "Noto Serif SC", "STSong", "SimSun", serif;
-            background: linear-gradient(135deg, #f5e6d3 0%, #e8d4bc 50%, #dcc9b6 100%);
+            background: linear-gradient(135deg, #fff5f8 0%, #fce4ec 45%, #f3f8f0 100%);
             min-height: 100vh;
             padding: 20px;
+            overflow-x: hidden;
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
 
         header {
@@ -30,25 +33,26 @@
 
         h1 {
             font-size: 2.5em;
-            color: #5d4037;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            color: #8b3a5a;
+            text-shadow: 2px 2px 6px rgba(139, 58, 90, 0.15);
             letter-spacing: 0.2em;
             margin-bottom: 10px;
         }
 
         .date-display {
             font-size: 1.2em;
-            color: #8d6e63;
+            color: #b05070;
             font-style: italic;
         }
 
         /* 日历样式 */
         .calendar {
-            background: #fffef8;
-            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 16px;
             padding: 20px;
             margin-bottom: 25px;
-            box-shadow: 0 4px 15px rgba(93, 64, 55, 0.15);
+            box-shadow: 0 4px 20px rgba(240, 100, 140, 0.15);
+            border: 1px solid #fad4e0;
         }
 
         .calendar-header {
@@ -59,23 +63,26 @@
         }
 
         .calendar-header button {
-            background: #8d6e63;
+            background: linear-gradient(135deg, #f48fb1, #e07090);
             color: white;
             border: none;
             padding: 8px 15px;
-            border-radius: 6px;
+            border-radius: 20px;
             cursor: pointer;
             font-size: 1em;
-            transition: background 0.3s;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(240, 100, 140, 0.3);
         }
 
         .calendar-header button:hover {
-            background: #6d4c41;
+            background: linear-gradient(135deg, #e07090, #c85070);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(240, 100, 140, 0.4);
         }
 
         .calendar-header span {
             font-size: 1.3em;
-            color: #5d4037;
+            color: #8b3a5a;
             font-weight: bold;
         }
 
@@ -87,7 +94,7 @@
         }
 
         .calendar-weekdays span {
-            color: #8d6e63;
+            color: #c07090;
             font-size: 0.9em;
             padding: 5px;
         }
@@ -104,16 +111,16 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             transition: background 0.3s;
             position: relative;
             font-size: 0.95em;
-            color: #5d4037;
+            color: #7a3050;
         }
 
         .calendar-day:hover {
-            background: #f5e6d3;
+            background: #fce4ec;
         }
 
         .calendar-day {
@@ -126,7 +133,7 @@
             bottom: 100%;
             left: 50%;
             transform: translateX(-50%);
-            background: #5d4037;
+            background: #8b3a5a;
             color: white;
             padding: 8px 12px;
             border-radius: 8px;
@@ -134,7 +141,7 @@
             white-space: nowrap;
             z-index: 100;
             margin-bottom: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 10px rgba(139, 58, 90, 0.2);
         }
 
         .calendar-tooltip::after {
@@ -144,7 +151,7 @@
             left: 50%;
             transform: translateX(-50%);
             border: 6px solid transparent;
-            border-top-color: #5d4037;
+            border-top-color: #8b3a5a;
         }
 
         .calendar-day:hover .calendar-tooltip {
@@ -152,17 +159,18 @@
         }
 
         .calendar-day.other-month {
-            color: #ccc;
+            color: #e0b0c0;
         }
 
         .calendar-day.today {
-            background: #f5e6d3;
+            background: #fce4ec;
             font-weight: bold;
+            border: 2px solid #f48fb1;
         }
 
         .calendar-day.has-diary {
             font-weight: bold;
-            background-color: var(--diary-color, #8d6e63);
+            background-color: var(--diary-color, #f06292);
             color: white;
         }
 
@@ -171,7 +179,7 @@
         }
 
         .calendar-day.is-meeting {
-            background-color: #BA68C8;
+            background-color: #ce93d8;
             color: white;
             font-weight: bold;
         }
@@ -202,7 +210,7 @@
         /* 在一起的时间 */
         .together-time {
             font-size: 1em;
-            color: #FF69B4;
+            color: #e0507a;
             margin-top: 5px;
             font-weight: bold;
         }
@@ -213,44 +221,45 @@
         }
 
         .diary-list h2 {
-            color: #5d4037;
+            color: #8b3a5a;
             font-size: 1.5em;
             margin-bottom: 20px;
             text-align: center;
-            border-bottom: 2px solid #d4c4b5;
+            border-bottom: 2px solid #f8c8d8;
             padding-bottom: 10px;
         }
 
         .diary-item {
-            background: #fffef8;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
             padding: 20px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 10px rgba(93, 64, 55, 0.1);
-            border-left: 4px solid #8d6e63;
+            box-shadow: 0 2px 12px rgba(240, 100, 140, 0.1);
+            border-left: 4px solid #f48fb1;
             cursor: pointer;
-            transition: transform 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
         }
 
         .diary-item:hover {
             transform: translateX(5px);
+            box-shadow: 0 4px 20px rgba(240, 100, 140, 0.2);
         }
 
         .diary-item .date {
-            color: #8d6e63;
+            color: #c07090;
             font-size: 0.9em;
             margin-bottom: 8px;
         }
 
         .diary-item .title {
-            color: #3e2723;
+            color: #7a2050;
             font-size: 1.2em;
             font-weight: bold;
             margin-bottom: 8px;
         }
 
         .diary-item .preview {
-            color: #5d4037;
+            color: #9a5070;
             font-size: 0.95em;
             line-height: 1.5;
             display: -webkit-box;
@@ -265,7 +274,7 @@
         }
 
         .diary-item .expand-hint {
-            color: #8d6e63;
+            color: #c07090;
             font-size: 0.85em;
             text-align: right;
             margin-top: 8px;
@@ -281,11 +290,11 @@
         .diary-comments {
             margin-top: 15px;
             padding-top: 15px;
-            border-top: 1px solid #e0d5c8;
+            border-top: 1px solid #f8c8d8;
         }
 
         .comments-title {
-            color: #8d6e63;
+            color: #c07090;
             font-size: 0.95em;
             margin-bottom: 10px;
         }
@@ -300,7 +309,7 @@
             gap: 8px;
             margin-bottom: 8px;
             padding: 8px;
-            background: #faf8f5;
+            background: #fff8fb;
             border-radius: 6px;
         }
 
@@ -309,20 +318,20 @@
         }
 
         .comment-item .content {
-            color: #5d4037;
+            color: #8a4060;
             font-size: 0.9em;
             flex: 1;
         }
 
         .comment-item .time {
-            color: #aaa;
+            color: #c0a0b0;
             font-size: 0.75em;
         }
 
         .comment-item .delete-btn {
             background: none;
             border: none;
-            color: #ccc;
+            color: #e0c0cc;
             cursor: pointer;
             font-size: 0.9em;
             padding: 2px 5px;
@@ -347,7 +356,7 @@
 
         .comment-item .user-badge.me {
             background: #FFD700;
-            color: #5d4037;
+            color: #7a3050;
         }
 
         .comment-item .user-badge.girlfriend {
@@ -363,7 +372,7 @@
 
         .user-selector button {
             padding: 4px 12px;
-            border: 2px solid #d4c4b5;
+            border: 2px solid #f8c8d8;
             background: white;
             border-radius: 15px;
             cursor: pointer;
@@ -385,7 +394,7 @@
         .user-selector button.me.active {
             border-color: #FFD700;
             background: #FFD700;
-            color: #5d4037;
+            color: #7a3050;
         }
 
         .comment-input-wrapper {
@@ -397,7 +406,7 @@
         .comment-input {
             flex: 1;
             padding: 8px 12px;
-            border: 1px solid #d4c4b5;
+            border: 1px solid #f8c8d8;
             border-radius: 20px;
             font-size: 0.9em;
             outline: none;
@@ -405,7 +414,7 @@
         }
 
         .comment-input:focus {
-            border-color: #8d6e63;
+            border-color: #f48fb1;
         }
 
         .emoji-picker {
@@ -413,7 +422,7 @@
             position: absolute;
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 10px rgba(240, 100, 140, 0.15);
             padding: 8px;
             gap: 5px;
             flex-wrap: wrap;
@@ -436,7 +445,7 @@
         }
 
         .emoji-picker button:hover {
-            background: #f5e6d3;
+            background: #fce4ec;
         }
 
         .emoji-btn {
@@ -449,30 +458,31 @@
         }
 
         .comment-submit {
-            background: #8d6e63;
+            background: linear-gradient(135deg, #f48fb1, #e07090);
             color: white;
             border: none;
             padding: 8px 15px;
             border-radius: 20px;
             cursor: pointer;
             font-size: 0.9em;
-            transition: background 0.3s;
+            transition: all 0.3s;
         }
 
         .comment-submit:hover {
-            background: #6d4c41;
+            background: linear-gradient(135deg, #e07090, #c85070);
+            transform: translateY(-1px);
         }
 
         .empty-state {
             text-align: center;
-            color: #8d6e63;
+            color: #c07090;
             padding: 40px;
             font-style: italic;
         }
 
         .loading {
             text-align: center;
-            color: #8d6e63;
+            color: #c07090;
             padding: 20px;
         }
 
@@ -507,7 +517,7 @@
             background: #fff;
             border-radius: 50% 50% 45% 45%;
             position: relative;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(240, 100, 140, 0.15);
         }
 
         .cat-ear {
@@ -574,7 +584,7 @@
             top: 14px;
             width: 20px;
             height: 1px;
-            background: #ccc;
+            background: #ddd;
         }
 
         .cat-whiskers.left { left: -10px; }
@@ -592,7 +602,7 @@
             background: #D2691E;
             border-radius: 50% 50% 45% 45%;
             position: relative;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(240, 100, 140, 0.15);
         }
 
         .dog-ear {
@@ -650,6 +660,40 @@
             background: #FF6B6B;
             border-radius: 0 0 50% 50%;
             animation: dogPant 0.5s ease-in-out infinite;
+        }
+
+        /* 樱花花瓣飘落动画 */
+        @keyframes petalFall {
+            0% {
+                transform: translateY(-30px) rotate(0deg) translateX(0px);
+                opacity: 0.9;
+            }
+            20% { transform: translateY(20vh) rotate(72deg) translateX(25px); }
+            40% { transform: translateY(40vh) rotate(144deg) translateX(-15px); }
+            60% { transform: translateY(60vh) rotate(216deg) translateX(20px); }
+            80% { transform: translateY(80vh) rotate(288deg) translateX(-10px); }
+            100% {
+                transform: translateY(108vh) rotate(360deg) translateX(0px);
+                opacity: 0;
+            }
+        }
+
+        .sakura-petal {
+            position: fixed;
+            top: 0;
+            pointer-events: none;
+            z-index: 0;
+            animation: petalFall linear infinite;
+        }
+
+        .sakura-petal::before {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            border-radius: 0 50% 50% 50%;
+            transform: rotate(45deg);
         }
 
         @keyframes catBounce {
@@ -768,7 +812,7 @@
             tired: '#A9A9A9'
         };
 
-        const defaultMoodColor = '#8d6e63';
+        const defaultMoodColor = '#f06292';
 
         let currentYear = new Date().getFullYear();
         let currentMonth = new Date().getMonth();
@@ -778,6 +822,24 @@
         let currentUser = localStorage.getItem('commentUser') || 'girlfriend';
 
         const commentEmojis = ['💕', '👍', '❤️', '😍', '😂', '🎉', '😢', '👏'];
+
+        // 创建樱花花瓣
+        function createSakuraPetals() {
+            const colors = ['#ffb7c5', '#ffc0cb', '#ffcdd2', '#f8bbd0', '#fce4ec', '#f9a8c0', '#ffb3ba'];
+            for (let i = 0; i < 20; i++) {
+                const petal = document.createElement('div');
+                petal.className = 'sakura-petal';
+                const size = Math.random() * 10 + 8;
+                petal.style.left = Math.random() * 100 + 'vw';
+                petal.style.width = size + 'px';
+                petal.style.height = size + 'px';
+                petal.style.background = colors[Math.floor(Math.random() * colors.length)];
+                petal.style.animationDuration = (Math.random() * 7 + 7) + 's';
+                petal.style.animationDelay = (Math.random() * 10) + 's';
+                petal.style.opacity = (Math.random() * 0.4 + 0.4).toString();
+                document.body.appendChild(petal);
+            }
+        }
 
         // 显示当前日期
         function updateDate() {
@@ -1222,6 +1284,7 @@
         }
 
         // 初始化
+        createSakuraPetals();
         updateDate();
         fetchDiaries();
     </script>
