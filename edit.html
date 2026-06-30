@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>写日记 - 小咪的日记本</title>
     <style>
+        :root {
+            --summer-ink: #2f5f6b;
+            --summer-ink-soft: #4f8891;
+            --summer-coral: #ff7f72;
+            --summer-coral-deep: #e96558;
+            --summer-sun: #ffd166;
+            --summer-mint: #94d9bd;
+            --summer-cream: #fff8d8;
+            --summer-paper: #fbfff6;
+            --summer-card: rgba(255, 255, 255, 0.78);
+            --summer-line: #b8eadf;
+            --summer-shadow: rgba(47, 95, 107, 0.13);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,14 +27,29 @@
 
         body {
             font-family: "Noto Serif SC", "STSong", "SimSun", serif;
-            background: linear-gradient(135deg, #fff5f8 0%, #fce4ec 45%, #f3f8f0 100%);
+            background:
+                repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px 18px),
+                linear-gradient(180deg, #e7fbff 0%, var(--summer-cream) 44%, #dff8ed 100%);
             min-height: 100vh;
             padding: 20px;
             overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background:
+                linear-gradient(115deg, transparent 0 14%, rgba(255, 209, 102, 0.18) 14% 16%, transparent 16% 100%),
+                linear-gradient(72deg, transparent 0 76%, rgba(148, 217, 189, 0.22) 76% 78%, transparent 78% 100%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent 34%);
         }
 
         .container {
-            max-width: 800px;
+            max-width: 860px;
             margin: 0 auto;
             position: relative;
             z-index: 1;
@@ -29,40 +58,72 @@
         header {
             text-align: center;
             margin-bottom: 30px;
+            padding-top: 10px;
+            position: relative;
+        }
+
+        header::after {
+            content: '';
+            display: block;
+            width: min(420px, 72vw);
+            height: 8px;
+            margin: 16px auto 0;
+            background:
+                linear-gradient(90deg, transparent, rgba(255, 127, 114, 0.34), rgba(255, 209, 102, 0.42), rgba(148, 217, 189, 0.34), transparent);
+            border-radius: 999px;
         }
 
         h1 {
             font-size: 2.5em;
-            color: #8b3a5a;
-            text-shadow: 2px 2px 6px rgba(139, 58, 90, 0.15);
+            color: var(--summer-ink);
+            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.82), 0 10px 20px rgba(47, 95, 107, 0.11);
             letter-spacing: 0.2em;
             margin-bottom: 10px;
         }
 
         .date-display {
             font-size: 1.2em;
-            color: #b05070;
+            color: var(--summer-ink-soft);
             font-style: italic;
         }
 
         .diary-card {
-            background: rgba(255, 255, 255, 0.92);
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(240, 100, 140, 0.15);
+            background: var(--summer-card);
+            border-radius: 18px;
+            box-shadow: 0 18px 42px var(--summer-shadow);
             padding: 40px;
             position: relative;
-            border: 1px solid #fad4e0;
+            border: 1px solid var(--summer-line);
+            backdrop-filter: blur(14px);
+            overflow: hidden;
+        }
+
+        .diary-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(90deg, rgba(255, 209, 102, 0.14), transparent 28%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.58), transparent 38%);
+        }
+
+        .diary-card > * {
+            position: relative;
+            z-index: 1;
         }
 
 
         .input-group {
             margin-bottom: 25px;
+            position: relative;
+            z-index: 1;
         }
 
         label {
             display: block;
             font-size: 1.1em;
-            color: #8b3a5a;
+            color: var(--summer-ink);
             margin-bottom: 10px;
             font-weight: bold;
         }
@@ -72,12 +133,12 @@
         textarea {
             width: 100%;
             padding: 15px;
-            border: 2px solid #f8c8d8;
+            border: 2px solid var(--summer-line);
             border-radius: 10px;
             font-size: 1.1em;
             font-family: inherit;
-            background: #fffafb;
-            color: #7a2050;
+            background: #fbfffb;
+            color: var(--summer-ink);
             transition: border-color 0.3s, box-shadow 0.3s;
         }
 
@@ -85,8 +146,8 @@
         input[type="date"]:focus,
         textarea:focus {
             outline: none;
-            border-color: #f48fb1;
-            box-shadow: 0 0 10px rgba(244, 143, 177, 0.25);
+            border-color: var(--summer-coral);
+            box-shadow: 0 0 10px rgba(255, 127, 114, 0.22);
         }
 
         textarea {
@@ -105,8 +166,8 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            border: 3px solid #f8c8d8;
-            background: #fffafb;
+            border: 3px solid var(--summer-line);
+            background: #fbfffb;
             font-size: 1.5em;
             cursor: pointer;
             transition: all 0.3s;
@@ -120,8 +181,8 @@
         }
 
         .mood-btn.selected {
-            border-color: #f48fb1;
-            background: #fce4ec;
+            border-color: var(--summer-coral);
+            background: #fff3c4;
             transform: scale(1.15);
         }
 
@@ -133,15 +194,15 @@
         }
 
         .writer-btn.selected {
-            background: #FF69B4;
+            background: var(--summer-coral);
             color: white;
-            border-color: #FF69B4;
+            border-color: var(--summer-coral);
         }
 
         .edit-btn {
             background: none;
             border: none;
-            color: #c07090;
+            color: var(--summer-ink-soft);
             cursor: pointer;
             font-size: 0.9em;
             padding: 5px 10px;
@@ -150,19 +211,19 @@
         }
 
         .edit-btn:hover {
-            color: #8b3a5a;
+            color: var(--summer-ink);
         }
 
         .diary-item .meta-info {
             display: flex;
             gap: 10px;
             font-size: 0.8em;
-            color: #c07090;
+            color: var(--summer-ink-soft);
             margin-top: 5px;
         }
 
         .diary-item .writer-badge {
-            background: #FF69B4;
+            background: var(--summer-coral);
             color: white;
             padding: 2px 8px;
             border-radius: 10px;
@@ -173,6 +234,8 @@
             gap: 15px;
             justify-content: center;
             margin-top: 30px;
+            position: relative;
+            z-index: 1;
         }
 
         .btn {
@@ -186,26 +249,26 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #f48fb1, #e07090);
+            background: linear-gradient(135deg, var(--summer-coral), var(--summer-sun));
             color: #fff;
-            box-shadow: 0 4px 15px rgba(240, 100, 140, 0.3);
+            box-shadow: 0 8px 20px rgba(255, 127, 114, 0.28);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(240, 100, 140, 0.4);
-            background: linear-gradient(135deg, #e07090, #c85070);
+            box-shadow: 0 9px 22px rgba(255, 127, 114, 0.35);
+            background: linear-gradient(135deg, var(--summer-coral-deep), #f6b44f);
         }
 
         .btn-secondary {
             background: #fff;
-            color: #8b3a5a;
-            border: 2px solid #f8c8d8;
+            color: var(--summer-ink);
+            border: 2px solid var(--summer-line);
         }
 
         .btn-secondary:hover {
-            background: #fce4ec;
-            border-color: #f48fb1;
+            background: #fff3c4;
+            border-color: var(--summer-coral);
         }
 
         .diary-list {
@@ -213,46 +276,61 @@
         }
 
         .diary-list h2 {
-            color: #8b3a5a;
+            color: var(--summer-ink);
             font-size: 1.5em;
             margin-bottom: 20px;
             text-align: center;
-            border-bottom: 2px solid #f8c8d8;
-            padding-bottom: 10px;
-        }
-
-        .diary-item {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 12px rgba(240, 100, 140, 0.1);
-            border-left: 4px solid #f48fb1;
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
+            border-bottom: 0;
+            padding-bottom: 16px;
             position: relative;
         }
 
+        .diary-list h2::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            width: min(520px, 84vw);
+            height: 3px;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, transparent, var(--summer-line), var(--summer-sun), var(--summer-line), transparent);
+            border-radius: 999px;
+        }
+
+        .diary-item {
+            background: var(--summer-card);
+            border-radius: 16px;
+            padding: 22px;
+            margin-bottom: 18px;
+            box-shadow: 0 14px 32px rgba(47, 95, 107, 0.1);
+            border: 1px solid rgba(184, 234, 223, 0.78);
+            border-left: 5px solid var(--summer-coral);
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
         .diary-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 20px rgba(240, 100, 140, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(55, 151, 164, 0.18);
         }
 
         .diary-item .date {
-            color: #c07090;
+            color: var(--summer-ink-soft);
             font-size: 0.9em;
             margin-bottom: 8px;
         }
 
         .diary-item .title {
-            color: #7a2050;
+            color: var(--summer-ink);
             font-size: 1.2em;
             font-weight: bold;
             margin-bottom: 8px;
         }
 
         .diary-item .preview {
-            color: #9a5070;
+            color: #4f7f83;
             font-size: 0.95em;
             line-height: 1.5;
             display: -webkit-box;
@@ -267,7 +345,7 @@
         }
 
         .diary-item .expand-hint {
-            color: #c07090;
+            color: var(--summer-ink-soft);
             font-size: 0.85em;
             text-align: right;
             margin-top: 8px;
@@ -299,11 +377,11 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%) translateY(-100px);
-            background: linear-gradient(135deg, #f48fb1, #e07090);
+            background: linear-gradient(135deg, var(--summer-coral), var(--summer-sun));
             color: #fff;
             padding: 15px 30px;
             border-radius: 25px;
-            box-shadow: 0 4px 15px rgba(240, 100, 140, 0.35);
+            box-shadow: 0 10px 24px rgba(255, 127, 114, 0.28);
             transition: transform 0.5s;
             z-index: 1000;
         }
@@ -314,7 +392,7 @@
 
         .empty-state {
             text-align: center;
-            color: #c07090;
+            color: var(--summer-ink-soft);
             padding: 40px;
             font-style: italic;
         }
@@ -326,7 +404,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(139, 58, 90, 0.75);
+            background: rgba(47, 95, 107, 0.68);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -340,19 +418,20 @@
             text-align: center;
             max-width: 400px;
             width: 90%;
-            border: 1px solid #fad4e0;
-            box-shadow: 0 8px 30px rgba(240, 100, 140, 0.2);
+            border: 1px solid var(--summer-line);
+            box-shadow: 0 18px 44px rgba(55, 151, 164, 0.22);
+            backdrop-filter: blur(14px);
         }
 
         .login-box h2 {
-            color: #8b3a5a;
+            color: var(--summer-ink);
             margin-bottom: 20px;
         }
 
         .login-box input {
             width: 100%;
             padding: 15px;
-            border: 2px solid #f8c8d8;
+            border: 2px solid var(--summer-line);
             border-radius: 10px;
             font-size: 1.1em;
             margin-bottom: 20px;
@@ -374,18 +453,18 @@
             right: 20px;
             padding: 10px 20px;
             background: rgba(255, 255, 255, 0.9);
-            border: 2px solid #f8c8d8;
+            border: 2px solid var(--summer-line);
             border-radius: 20px;
             cursor: pointer;
             font-family: inherit;
-            color: #8b3a5a;
+            color: var(--summer-ink);
             transition: all 0.3s;
             z-index: 10;
         }
 
         .logout-btn:hover {
-            background: #fce4ec;
-            border-color: #f48fb1;
+            background: #fff3c4;
+            border-color: var(--summer-coral);
         }
 
         /* 樱花花瓣飘落动画 */
@@ -489,7 +568,7 @@
 
         <!-- 见面日期管理 -->
         <div class="diary-card" style="margin-top: 30px;">
-            <h2 style="color: #8b3a5a; font-size: 1.3em; margin-bottom: 20px; text-align: center;">见面日期管理</h2>
+            <h2 style="color: var(--summer-ink); font-size: 1.3em; margin-bottom: 20px; text-align: center;">见面日期管理</h2>
 
             <div class="input-group">
                 <label>添加见面日期</label>
@@ -936,14 +1015,14 @@
             }
         }
 
-        // 创建樱花花瓣（SVG五瓣樱花）
+        // 创建夏日花瓣（SVG五瓣小花）
         function createSakuraPetals() {
             const petalColors = [
-                ['#ffb7c5', '#ff94a8'],
-                ['#ffc8d5', '#ffaab8'],
-                ['#ffd6e0', '#ffb7c5'],
-                ['#f9a8c0', '#f07090'],
-                ['#ffe0ec', '#ffb7c5'],
+                ['#fff0a8', '#ffd166'],
+                ['#c8f4e4', '#94d9bd'],
+                ['#bfeeff', '#7bd5ee'],
+                ['#ffd3a8', '#ff9f6e'],
+                ['#fff8d8', '#ffd166'],
             ];
             for (let i = 0; i < 35; i++) {
                 const petal = document.createElement('div');
