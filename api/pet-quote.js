@@ -5,6 +5,7 @@ const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
 
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 const DEFAULT_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
+const QUOTE_PROMPT_VERSION = 'v2-perspective';
 
 function normalizePetType(petType) {
   return petType === 'dog' ? 'dog' : 'cat';
@@ -36,6 +37,7 @@ function normalizeDiary(diary) {
 
 function cacheKeyFor(petType, variantIndex, diaries) {
   const input = JSON.stringify({
+    version: QUOTE_PROMPT_VERSION,
     petType,
     variantIndex,
     diaries: diaries.map((diary) => ({
@@ -50,7 +52,7 @@ function cacheKeyFor(petType, variantIndex, diaries) {
   });
   const digest = crypto.createHash('sha256').update(input).digest('hex').slice(0, 20);
 
-  return `pet-quote:${petType}:${variantIndex}:${digest}`;
+  return `pet-quote:${QUOTE_PROMPT_VERSION}:${petType}:${variantIndex}:${digest}`;
 }
 
 function cleanQuote(quote) {
@@ -92,8 +94,8 @@ export default async function handler(req, res) {
   const petName = petType === 'cat' ? '喵小咪' : '小比格';
   const partnerName = petType === 'cat' ? '小比格' : '喵小咪';
   const petVoice = petType === 'cat'
-    ? '像一只被宠爱的小猫：灵动、会撒娇、会把自己的努力和小情绪说得亮晶晶。'
-    : '像一只认真守护的小狗：活泼、真诚、会把哥哥的喜欢落实成行动。';
+    ? '喵小咪第一视角：我就是喵小咪，灵动、会撒娇，会把自己的努力、小情绪和被小比格宠爱的感觉说得亮晶晶。'
+    : '小比格第一视角：我就是小比格，活泼、真诚，会把哥哥的喜欢、守护和行动说得具体又可靠。';
   const prompt = [
     `点击对象：${petName}`,
     `另一只宠物：${partnerName}`,
@@ -109,6 +111,8 @@ export default async function handler(req, res) {
     '4. 必须结合日记里的一个具体内容，例如学习、工作、健身、美食、见面、道歉、游戏、地点或当天事件。',
     '5. 30 到 50 个中文字。',
     '6. 称呼只能使用喵小咪和小比格。',
+    '7. 必须使用点击对象的第一视角，可以说我；喵小咪的我不是小比格，小比格的我不是喵小咪。',
+    '8. 不要写成旁白，不要同时替两只宠物说话。',
     '',
     `日记 JSON：${JSON.stringify(diaries)}`
   ].join('\n');
@@ -124,7 +128,7 @@ export default async function handler(req, res) {
       messages: [
         {
           role: 'system',
-          content: '你是小咪日记的宠物语录生成器，只输出一句活泼、自然、贴近日记内容的中文短句。'
+          content: '你是小咪日记的宠物语录生成器，只输出一句点击对象第一视角的中文短句。'
         },
         {
           role: 'user',
