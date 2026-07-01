@@ -10,6 +10,11 @@ function normalizePetType(petType) {
   return petType === 'dog' ? 'dog' : 'cat';
 }
 
+function normalizeVariantIndex(value) {
+  const index = Number(value);
+  return Number.isInteger(index) && index >= 0 ? index % 10 : 0;
+}
+
 function cleanText(text, maxLength = 1200) {
   return String(text || '')
     .replace(/\s+/g, ' ')
@@ -29,9 +34,10 @@ function normalizeDiary(diary) {
   };
 }
 
-function cacheKeyFor(petType, diaries) {
+function cacheKeyFor(petType, variantIndex, diaries) {
   const input = JSON.stringify({
     petType,
+    variantIndex,
     diaries: diaries.map((diary) => ({
       id: diary.id,
       date: diary.date,
@@ -44,7 +50,7 @@ function cacheKeyFor(petType, diaries) {
   });
   const digest = crypto.createHash('sha256').update(input).digest('hex').slice(0, 20);
 
-  return `pet-quote:${petType}:${digest}`;
+  return `pet-quote:${petType}:${variantIndex}:${digest}`;
 }
 
 function cleanQuote(quote) {
@@ -65,6 +71,7 @@ export default async function handler(req, res) {
   }
 
   const petType = normalizePetType(req.body?.petType);
+  const variantIndex = normalizeVariantIndex(req.body?.variantIndex);
   const diaries = Array.isArray(req.body?.diaries)
     ? req.body.diaries.slice(0, 2).map(normalizeDiary)
     : [];
@@ -73,7 +80,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: '缺少日记内容' });
   }
 
-  const cacheKey = cacheKeyFor(petType, diaries);
+  const cacheKey = cacheKeyFor(petType, variantIndex, diaries);
 
   if (redis) {
     const cached = await redis.get(cacheKey);
@@ -84,18 +91,24 @@ export default async function handler(req, res) {
 
   const petName = petType === 'cat' ? '喵小咪' : '小比格';
   const partnerName = petType === 'cat' ? '小比格' : '喵小咪';
+  const petVoice = petType === 'cat'
+    ? '像一只被宠爱的小猫：灵动、会撒娇、会把自己的努力和小情绪说得亮晶晶。'
+    : '像一只认真守护的小狗：活泼、真诚、会把哥哥的喜欢落实成行动。';
   const prompt = [
     `点击对象：${petName}`,
     `另一只宠物：${partnerName}`,
+    `本次是第 ${variantIndex + 1} 个版本，请和另外 9 个版本明显不同。`,
     '',
     '请阅读下面今天和前一天的小咪日记，理解其中的事情、情绪和关系。',
     '生成一句像这只宠物说出来的中文语录。',
+    `角色语气：${petVoice}`,
     '要求：',
-    '1. 不要摘抄原文，不要加引号。',
+    '1. 不要摘抄原文，要先理解再改写成新的句子，不要加引号。',
     '2. 不要输出 emoji、括号、Markdown、解释或多句。',
-    '3. 语气温柔、亲密、可爱，但不要油腻。',
-    '4. 35 个中文字以内。',
-    '5. 称呼只能使用喵小咪和小比格。',
+    '3. 语气更活泼、更亲密、更可爱，可以俏皮，但不要油腻。',
+    '4. 必须结合日记里的一个具体内容，例如学习、工作、健身、美食、见面、道歉、游戏、地点或当天事件。',
+    '5. 30 到 50 个中文字。',
+    '6. 称呼只能使用喵小咪和小比格。',
     '',
     `日记 JSON：${JSON.stringify(diaries)}`
   ].join('\n');
@@ -111,7 +124,7 @@ export default async function handler(req, res) {
       messages: [
         {
           role: 'system',
-          content: '你是小咪日记的宠物语录生成器，只输出一句干净自然的中文短句。'
+          content: '你是小咪日记的宠物语录生成器，只输出一句活泼、自然、贴近日记内容的中文短句。'
         },
         {
           role: 'user',
@@ -119,8 +132,8 @@ export default async function handler(req, res) {
         }
       ],
       stream: false,
-      temperature: 0.8,
-      max_tokens: 80
+      temperature: 0.95,
+      max_tokens: 120
     })
   });
 

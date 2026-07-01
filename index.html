@@ -1358,7 +1358,7 @@
                 </div>`;
         }
 
-        let petQuoteCounter = 0;
+        const petQuoteCounters = { cat: 0, dog: 0 };
         const petQuoteCache = new Map();
 
         function getDateKey(date) {
@@ -1445,8 +1445,29 @@
             return summary.themes.includes(theme);
         }
 
-        function pickGeneratedLine(lines) {
-            return lines[petQuoteCounter % lines.length];
+        function getPetVariantIndex(petType) {
+            return petQuoteCounters[petType] % 10;
+        }
+
+        function advancePetQuoteCounter(petType) {
+            petQuoteCounters[petType] = (petQuoteCounters[petType] + 1) % 10;
+        }
+
+        function normalizeLocalQuote(text, petType) {
+            let quote = String(text || '').trim();
+            const tail = petType === 'cat'
+                ? '今天也要被小比格认真宠着。'
+                : '今天也要把喵小咪稳稳放在心上。';
+
+            if ([...quote].length < 30) {
+                quote = `${quote}${tail}`;
+            }
+
+            return [...quote].slice(0, 50).join('');
+        }
+
+        function pickGeneratedLine(lines, variantIndex, petType) {
+            return normalizeLocalQuote(lines[variantIndex % lines.length], petType);
         }
 
         function compactDiaryForQuote(diary) {
@@ -1461,15 +1482,16 @@
             };
         }
 
-        function getPetQuoteCacheKey(petType, contextDiaries) {
+        function getPetQuoteCacheKey(petType, contextDiaries, variantIndex) {
             return [
                 petType,
+                variantIndex,
                 ...contextDiaries.map((diary) => `${diary.id || ''}:${getDateKey(diary.date)}:${String(diary.content || '').length}`)
             ].join('|');
         }
 
-        async function requestModelPetQuote(petType, contextDiaries) {
-            const cacheKey = getPetQuoteCacheKey(petType, contextDiaries);
+        async function requestModelPetQuote(petType, contextDiaries, variantIndex) {
+            const cacheKey = getPetQuoteCacheKey(petType, contextDiaries, variantIndex);
             if (petQuoteCache.has(cacheKey)) {
                 return petQuoteCache.get(cacheKey);
             }
@@ -1483,6 +1505,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         petType,
+                        variantIndex,
                         diaries: contextDiaries.map(compactDiaryForQuote)
                     }),
                     signal: controller.signal
@@ -1505,13 +1528,36 @@
             }
         }
 
-        function buildPetQuote(petType) {
+        function buildPetQuote(petType, variantIndex = getPetVariantIndex(petType)) {
             const contextDiaries = getDiaryContextPair();
 
             if (!contextDiaries.length) {
-                return petType === 'cat'
-                    ? '我还在等今天的小咪日记加载出来，先贴贴一下。'
-                    : '我还没翻到今天的小咪日记，先乖乖守在这里。';
+                const loadingLines = petType === 'cat'
+                    ? [
+                        '喵小咪还在等日记慢慢冒出来，先把今日份贴贴能量攒满。',
+                        '喵小咪的小爪子已经准备好啦，日记一来就开始认真发光。',
+                        '喵小咪暂时没读到新内容，但可爱频道已经提前开播啦。',
+                        '喵小咪先晃晃尾巴等一等，等日记来了再甜甜点评。',
+                        '喵小咪把小脑袋探出来啦，今天的故事快一点出现吧。',
+                        '喵小咪先把好心情铺开，等日记加载完就开始撒欢。',
+                        '喵小咪今天先营业一小会儿，等内容来了再认真贴贴。',
+                        '喵小咪的小耳朵竖起来啦，正在等今天的小秘密抵达。',
+                        '喵小咪先收下一朵小太阳，等日记出现再送给小比格。',
+                        '喵小咪还没翻到新页，但已经准备好被温柔记住啦。'
+                    ]
+                    : [
+                        '小比格还没翻到今天的日记，先乖乖守着喵小咪的位置。',
+                        '小比格的小本本已经打开啦，等故事来了马上认真记下。',
+                        '小比格先把喜欢充满电，等日记出现就立刻开始守护。',
+                        '小比格暂时没读到新内容，但想喵小咪这件事不会暂停。',
+                        '小比格已经坐好等更新啦，尾巴里的期待快藏不住了。',
+                        '小比格先把安心感摆好，等日记加载完再认真回应。',
+                        '小比格还在门口等今日故事，喵小咪一出现就有夸夸。',
+                        '小比格的小耳朵已经上线，准备接住喵小咪的新心情。',
+                        '小比格先练习乖乖陪伴，等日记到了就把爱意递上。',
+                        '小比格还没看到新页，但已经把喵小咪放在心尖啦。'
+                    ];
+                return pickGeneratedLine(loadingLines, variantIndex, petType);
             }
 
             const summary = understandDiaryContext(contextDiaries);
@@ -1519,63 +1565,87 @@
 
             if (petType === 'cat') {
                 if (hasTheme(summary, 'growth') || hasTheme(summary, 'study')) {
-                    lines.push('喵小咪今天像会发光的小专家，遇到难题也能一点点把它拆开。');
-                    lines.push('喵小咪把认真和聪明都藏在行动里，小比格看见了，也很为她骄傲。');
+                    lines.push('喵小咪今天把学习难题拆得亮晶晶，小比格快来发十份夸夸。');
+                    lines.push('喵小咪把认真和聪明塞进日程里，小比格看完骄傲到转圈。');
                 }
                 if (hasTheme(summary, 'busy') || hasTheme(summary, 'health')) {
-                    lines.push('喵小咪今天已经很努力了，剩下的任务是好好喝水、好好休息。');
-                    lines.push('喵小咪不用一直绷紧，小比格会记得提醒她慢一点、舒服一点。');
+                    lines.push('喵小咪今天忙到小爪发热啦，剩下任务是喝水休息被抱抱。');
+                    lines.push('喵小咪不用一直绷紧，小比格会举着安心牌提醒她慢一点。');
                 }
                 if (hasTheme(summary, 'food')) {
-                    lines.push('喵小咪今天适合被好吃的哄开心，但也要被小比格认真照顾好。');
+                    lines.push('喵小咪今天适合被好吃的哄开心，小比格负责记菜单和照顾。');
                 }
                 if (hasTheme(summary, 'travel')) {
-                    lines.push('喵小咪和小比格的距离正在变短，下一次见面会把想念都补回来。');
+                    lines.push('喵小咪和小比格的距离在变短，下一次见面要把想念补满。');
                 }
                 if (hasTheme(summary, 'sorry')) {
-                    lines.push('喵小咪的委屈值得被认真听见，小比格要把心疼变成行动。');
+                    lines.push('喵小咪的委屈要被认真接住，小比格不许只说，要好好改。');
                 }
                 if (hasTheme(summary, 'game')) {
-                    lines.push('喵小咪今天也有快乐能量，游戏和陪伴都让两个人更像一队。');
+                    lines.push('喵小咪今天的快乐能量上线啦，游戏和陪伴都像双人模式。');
                 }
                 if (hasTheme(summary, 'beauty')) {
-                    lines.push('喵小咪今天依然是漂亮又闪亮的小猫，连日记都在偷偷夸她。');
+                    lines.push('喵小咪今天漂亮得很有存在感，连日记都在偷偷给她打光。');
                 }
 
-                lines.push('喵小咪今天被日记温柔地记住了，小比格也会继续把她放在心尖尖。');
-                return pickGeneratedLine(lines);
+                lines.push(
+                    '喵小咪今天把认真值拉满啦，小比格必须立刻献上夸夸和贴贴。',
+                    '喵小咪的小脑袋装了好多事，但可爱能量还是满格发光。',
+                    '喵小咪今天辛苦归辛苦，尾巴尖尖也要被温柔顺一顺。',
+                    '喵小咪负责闪闪发光，小比格负责把每一点厉害都记牢。',
+                    '喵小咪今天值得热乎乎的偏爱，小比格端着夸奖跑来啦。',
+                    '喵小咪的今日份小情绪已被接住，小比格申请长期守护。',
+                    '喵小咪不管忙不忙，都要被提醒喝水、休息、慢慢来。',
+                    '喵小咪的可爱雷达启动啦，把日记里的甜甜瞬间全收好。',
+                    '喵小咪今天也在认真生活，小比格看完只想说宝宝太棒啦。',
+                    '喵小咪请查收今日小奖章，里面装着努力、可爱和撒娇。'
+                );
+                return pickGeneratedLine(lines, variantIndex, petType);
             }
 
             if (hasTheme(summary, 'growth') || hasTheme(summary, 'health')) {
-                lines.push('小比格读懂了，自己要变得更可靠，也要把照顾喵小咪这件事做得更细。');
-                lines.push('小比格今天的任务很清楚，认真进步，认真生活，认真喜欢喵小咪。');
+                lines.push('小比格读懂啦，今天要把进步和照顾都安排好，稳稳接住喵小咪。');
+                lines.push('小比格的任务很清楚，认真变好，再认真把喵小咪放第一位。');
             }
             if (hasTheme(summary, 'busy') || hasTheme(summary, 'study')) {
-                lines.push('小比格知道两个人都在忙，所以更要把陪伴做得安稳一点。');
-                lines.push('小比格会把今天的努力存起来，慢慢变成让喵小咪安心的底气。');
+                lines.push('小比格知道今天都在忙，所以陪伴要更稳，消息也要更甜一点。');
+                lines.push('小比格会把努力存起来，慢慢变成让喵小咪安心的底气。');
             }
             if (hasTheme(summary, 'food')) {
-                lines.push('小比格已经记下来了，快乐可以从一顿好吃的开始，但照顾也不能缺席。');
+                lines.push('小比格已经记下好吃的线索啦，下次要把喵小咪喂得开心。');
             }
             if (hasTheme(summary, 'travel')) {
-                lines.push('小比格正在朝喵小咪靠近，路上的每一步都装着想见她的心情。');
+                lines.push('小比格正在朝喵小咪靠近，路上的每一步都装着想见她。');
             }
             if (hasTheme(summary, 'sorry')) {
-                lines.push('小比格要少说漂亮话，多做让喵小咪安心的事，把抱歉变成改变。');
+                lines.push('小比格要少说漂亮话，多做安心事，把抱歉认真变成改变。');
             }
             if (hasTheme(summary, 'game')) {
-                lines.push('小比格今天也想和喵小咪并肩作战，输赢都没有陪在一起重要。');
+                lines.push('小比格今天也想和喵小咪并肩作战，输赢都没陪伴重要。');
             }
 
-            lines.push('小比格把这两天的日记读成一句话，要继续爱喵小咪，也继续成为更好的自己。');
-            return pickGeneratedLine(lines);
+            lines.push(
+                '小比格读完日记，决定把喜欢变成行动，乖乖升级中。',
+                '小比格的小本本记好了，喵小咪的开心辛苦和想念都重要。',
+                '小比格继续当专属陪伴官，哪里需要安慰就立刻冲过去。',
+                '小比格把今日份爱意充满电，随时给喵小咪递上安心。',
+                '小比格看到喵小咪这么努力，尾巴都要摇成小风扇啦。',
+                '小比格的任务清单，想喵小咪、夸喵小咪、照顾喵小咪。',
+                '小比格会把日记里的小细节收好，下次见面一件件兑现。',
+                '小比格申请成为喵小咪的快乐补给站，随叫随到不打烊。',
+                '小比格今天也要认真变好，这样才能稳稳接住喵小咪。',
+                '小比格读懂啦，重要的不是说很多话，是让喵小咪安心。'
+            );
+            return pickGeneratedLine(lines, variantIndex, petType);
         }
 
         async function showPetQuote(pet, options = {}) {
             const quote = document.createElement('div');
-            const name = options.petType === 'cat' ? '喵小咪' : '小比格';
+            const petType = options.petType === 'dog' ? 'dog' : 'cat';
+            const variantIndex = getPetVariantIndex(petType);
+            const name = petType === 'cat' ? '喵小咪' : '小比格';
             const contextDiaries = getDiaryContextPair();
-            const fallbackQuote = buildPetQuote(options.petType);
+            const fallbackQuote = buildPetQuote(petType, variantIndex);
             const rect = pet.getBoundingClientRect();
             const left = Math.min(Math.max(rect.left + rect.width / 2, 148), window.innerWidth - 148);
             const top = Math.max(rect.top - 8, 92);
@@ -1592,11 +1662,11 @@
             quote.appendChild(nameNode);
             quote.appendChild(quoteText);
             document.body.appendChild(quote);
-            petQuoteCounter += 1;
+            advancePetQuoteCounter(petType);
 
             if (contextDiaries.length) {
                 try {
-                    quoteText.textContent = await requestModelPetQuote(options.petType, contextDiaries);
+                    quoteText.textContent = await requestModelPetQuote(petType, contextDiaries, variantIndex);
                 } catch (error) {
                     quoteText.textContent = fallbackQuote;
                 }
