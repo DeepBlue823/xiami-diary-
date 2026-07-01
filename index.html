@@ -1359,6 +1359,7 @@
         }
 
         let petQuoteCounter = 0;
+        const petQuoteCache = new Map();
 
         function getDateKey(date) {
             const value = new Date(date);
@@ -1448,6 +1449,62 @@
             return lines[petQuoteCounter % lines.length];
         }
 
+        function compactDiaryForQuote(diary) {
+            return {
+                id: diary.id,
+                date: diary.date,
+                title: diary.title || '',
+                content: String(diary.content || '').slice(0, 1400),
+                mood: diary.mood || '',
+                girlfriendLocation: diary.girlfriendLocation || '',
+                myLocation: diary.myLocation || ''
+            };
+        }
+
+        function getPetQuoteCacheKey(petType, contextDiaries) {
+            return [
+                petType,
+                ...contextDiaries.map((diary) => `${diary.id || ''}:${getDateKey(diary.date)}:${String(diary.content || '').length}`)
+            ].join('|');
+        }
+
+        async function requestModelPetQuote(petType, contextDiaries) {
+            const cacheKey = getPetQuoteCacheKey(petType, contextDiaries);
+            if (petQuoteCache.has(cacheKey)) {
+                return petQuoteCache.get(cacheKey);
+            }
+
+            const controller = new AbortController();
+            const timeoutId = window.setTimeout(() => controller.abort(), 8000);
+
+            try {
+                const response = await fetch('/api/pet-quote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        petType,
+                        diaries: contextDiaries.map(compactDiaryForQuote)
+                    }),
+                    signal: controller.signal
+                });
+
+                if (!response.ok) {
+                    throw new Error('pet quote request failed');
+                }
+
+                const data = await response.json();
+                const quote = String(data.quote || '').trim();
+                if (!quote) {
+                    throw new Error('empty pet quote');
+                }
+
+                petQuoteCache.set(cacheKey, quote);
+                return quote;
+            } finally {
+                window.clearTimeout(timeoutId);
+            }
+        }
+
         function buildPetQuote(petType) {
             const contextDiaries = getDiaryContextPair();
 
@@ -1514,9 +1571,11 @@
             return pickGeneratedLine(lines);
         }
 
-        function showPetQuote(pet, options = {}) {
+        async function showPetQuote(pet, options = {}) {
             const quote = document.createElement('div');
             const name = options.petType === 'cat' ? '喵小咪' : '小比格';
+            const contextDiaries = getDiaryContextPair();
+            const fallbackQuote = buildPetQuote(options.petType);
             const rect = pet.getBoundingClientRect();
             const left = Math.min(Math.max(rect.left + rect.width / 2, 148), window.innerWidth - 148);
             const top = Math.max(rect.top - 8, 92);
@@ -1529,12 +1588,21 @@
             const nameNode = document.createElement('span');
             nameNode.className = 'quote-name';
             nameNode.textContent = `${name}：`;
+            const quoteText = document.createTextNode(contextDiaries.length ? '正在读今天的小咪日记...' : fallbackQuote);
             quote.appendChild(nameNode);
-            quote.appendChild(document.createTextNode(buildPetQuote(options.petType)));
+            quote.appendChild(quoteText);
             document.body.appendChild(quote);
             petQuoteCounter += 1;
 
-            window.setTimeout(() => quote.remove(), 4300);
+            if (contextDiaries.length) {
+                try {
+                    quoteText.textContent = await requestModelPetQuote(options.petType, contextDiaries);
+                } catch (error) {
+                    quoteText.textContent = fallbackQuote;
+                }
+            }
+
+            window.setTimeout(() => quote.remove(), 6200);
         }
 
         function getPetSources(img) {
