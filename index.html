@@ -1397,26 +1397,55 @@
             return [current, previous].filter(Boolean);
         }
 
-        function normalizePetNames(text) {
-            return text
-                .replace(/小比格|比格|哥哥|小狗/g, '小比格')
-                .replace(/小咪宝宝|咪宝宝|咪宝|小猫咪|小猫|猫猫|咪咪|小咪(?!日记)|宝宝/g, '喵小咪');
-        }
-
-        function splitDiarySentences(text) {
+        function cleanDiaryText(text) {
             return String(text || '')
+                .replace(/小比格|比格|哥哥|小狗/g, '小比格')
+                .replace(/小咪宝宝|咪宝宝|咪宝|小猫咪|小猫|猫猫|咪咪|小咪(?!日记)|宝宝/g, '喵小咪')
+                .replace(/[^\u3400-\u9fffA-Za-z0-9，。！？、；：\s]/g, '')
                 .replace(/\s+/g, ' ')
-                .split(/(?<=[。！？!?.~～])/)
-                .map((sentence) => sentence.trim())
-                .filter((sentence) => sentence.length >= 8);
+                .trim();
         }
 
-        function trimSnippet(text, maxLength = 42) {
-            const clean = normalizePetNames(text)
-                .replace(/[“”"]/g, '')
-                .trim();
+        function countKeywordHits(text, keywords) {
+            return keywords.reduce((count, keyword) => (
+                text.includes(keyword) ? count + 1 : count
+            ), 0);
+        }
 
-            return clean.length > maxLength ? `${clean.slice(0, maxLength)}...` : clean;
+        function understandDiaryContext(contextDiaries) {
+            const text = cleanDiaryText(contextDiaries.map((diary) => [
+                diary.title,
+                diary.content,
+                diary.girlfriendLocation,
+                diary.myLocation
+            ].filter(Boolean).join('。')).join('。'));
+            const themeRules = [
+                { name: 'care', words: ['爱', '想', '陪', '晚安', '可爱', '亲', '抱', '心', '甜'] },
+                { name: 'growth', words: ['厉害', '进步', '优秀', '解决', '能力', '成功', '效率', '工具', '打包', '封装'] },
+                { name: 'busy', words: ['忙', '忙碌', '累', '辛苦', '项目', '工作', '实习', '任务', '论文'] },
+                { name: 'study', words: ['学习', '英语', 'CPA', '考试', '计划', '论文', 'coding', '投行'] },
+                { name: 'health', words: ['健身', '减肥', '体重', '减脂', '健康', '休息', '睡觉', '生病', '感冒', '喝水', '腰疼'] },
+                { name: 'food', words: ['吃', '好吃', '美食', '饭', '外卖', '蛋糕', '鸭', '麻辣', '豆腐脑', '喜茶'] },
+                { name: 'travel', words: ['见面', '旅途', '旅行', '出去玩', '副驾', '开车', '酒店', '成都', '重庆', '南昌'] },
+                { name: 'sorry', words: ['对不起', '抱歉', '难过', '生气', '哭', '内疚', '伤心', '道歉'] },
+                { name: 'game', words: ['游戏', '大乱斗', '海克斯', 'LOL', 'lolm', '麻将', '上分'] },
+                { name: 'beauty', words: ['美', '化妆', '照片', '裙', '漂亮', '穿搭', '礼物'] }
+            ];
+            const themes = themeRules
+                .map((theme) => ({ name: theme.name, score: countKeywordHits(text, theme.words) }))
+                .filter((theme) => theme.score > 0)
+                .sort((a, b) => b.score - a.score)
+                .map((theme) => theme.name);
+
+            return { themes };
+        }
+
+        function hasTheme(summary, theme) {
+            return summary.themes.includes(theme);
+        }
+
+        function pickGeneratedLine(lines) {
+            return lines[petQuoteCounter % lines.length];
         }
 
         function buildPetQuote(petType) {
@@ -1428,37 +1457,61 @@
                     : '我还没翻到今天的小咪日记，先乖乖守在这里。';
             }
 
-            const aliases = petType === 'cat'
-                ? ['小咪', '咪宝宝', '咪宝', '咪咪', '小猫', '猫猫', '宝宝']
-                : ['哥哥', '比格', '小狗', '小比格'];
-            const fallbackAliases = petType === 'cat'
-                ? ['哥哥', '比格', '小狗', '小比格']
-                : ['小咪', '咪宝宝', '咪宝', '咪咪', '小猫', '猫猫', '宝宝'];
-            const sentences = contextDiaries.flatMap((diary) => [
-                diary.title || '',
-                ...splitDiarySentences(diary.content)
-            ].filter(Boolean));
-            const matching = sentences.filter((sentence) => aliases.some((alias) => sentence.includes(alias)));
-            const fallback = sentences.filter((sentence) => fallbackAliases.some((alias) => sentence.includes(alias)));
-            const pool = matching.length ? matching : (fallback.length ? fallback : sentences);
-            const selected = pool[petQuoteCounter % pool.length] || '今天也要好好相爱呀。';
-            const snippet = trimSnippet(selected);
+            const summary = understandDiaryContext(contextDiaries);
+            const lines = [];
 
             if (petType === 'cat') {
-                const templates = [
-                    `我看到日记里写着「${snippet}」，这句喵小咪收下啦。`,
-                    `今天的喵小咪语录是：「${snippet}」要被小比格好好记住。`,
-                    `从今天和昨天的日记里翻到一句：「${snippet}」喵小咪很满意。`
-                ];
-                return templates[petQuoteCounter % templates.length];
+                if (hasTheme(summary, 'growth') || hasTheme(summary, 'study')) {
+                    lines.push('喵小咪今天像会发光的小专家，遇到难题也能一点点把它拆开。');
+                    lines.push('喵小咪把认真和聪明都藏在行动里，小比格看见了，也很为她骄傲。');
+                }
+                if (hasTheme(summary, 'busy') || hasTheme(summary, 'health')) {
+                    lines.push('喵小咪今天已经很努力了，剩下的任务是好好喝水、好好休息。');
+                    lines.push('喵小咪不用一直绷紧，小比格会记得提醒她慢一点、舒服一点。');
+                }
+                if (hasTheme(summary, 'food')) {
+                    lines.push('喵小咪今天适合被好吃的哄开心，但也要被小比格认真照顾好。');
+                }
+                if (hasTheme(summary, 'travel')) {
+                    lines.push('喵小咪和小比格的距离正在变短，下一次见面会把想念都补回来。');
+                }
+                if (hasTheme(summary, 'sorry')) {
+                    lines.push('喵小咪的委屈值得被认真听见，小比格要把心疼变成行动。');
+                }
+                if (hasTheme(summary, 'game')) {
+                    lines.push('喵小咪今天也有快乐能量，游戏和陪伴都让两个人更像一队。');
+                }
+                if (hasTheme(summary, 'beauty')) {
+                    lines.push('喵小咪今天依然是漂亮又闪亮的小猫，连日记都在偷偷夸她。');
+                }
+
+                lines.push('喵小咪今天被日记温柔地记住了，小比格也会继续把她放在心尖尖。');
+                return pickGeneratedLine(lines);
             }
 
-            const templates = [
-                `我在日记里记下了「${snippet}」，小比格会继续乖乖努力。`,
-                `今天的小比格读到：「${snippet}」已经开始认真点头了。`,
-                `从今天和昨天的日记里翻到一句：「${snippet}」小比格记在心里。`
-            ];
-            return templates[petQuoteCounter % templates.length];
+            if (hasTheme(summary, 'growth') || hasTheme(summary, 'health')) {
+                lines.push('小比格读懂了，自己要变得更可靠，也要把照顾喵小咪这件事做得更细。');
+                lines.push('小比格今天的任务很清楚，认真进步，认真生活，认真喜欢喵小咪。');
+            }
+            if (hasTheme(summary, 'busy') || hasTheme(summary, 'study')) {
+                lines.push('小比格知道两个人都在忙，所以更要把陪伴做得安稳一点。');
+                lines.push('小比格会把今天的努力存起来，慢慢变成让喵小咪安心的底气。');
+            }
+            if (hasTheme(summary, 'food')) {
+                lines.push('小比格已经记下来了，快乐可以从一顿好吃的开始，但照顾也不能缺席。');
+            }
+            if (hasTheme(summary, 'travel')) {
+                lines.push('小比格正在朝喵小咪靠近，路上的每一步都装着想见她的心情。');
+            }
+            if (hasTheme(summary, 'sorry')) {
+                lines.push('小比格要少说漂亮话，多做让喵小咪安心的事，把抱歉变成改变。');
+            }
+            if (hasTheme(summary, 'game')) {
+                lines.push('小比格今天也想和喵小咪并肩作战，输赢都没有陪在一起重要。');
+            }
+
+            lines.push('小比格把这两天的日记读成一句话，要继续爱喵小咪，也继续成为更好的自己。');
+            return pickGeneratedLine(lines);
         }
 
         function showPetQuote(pet, options = {}) {
