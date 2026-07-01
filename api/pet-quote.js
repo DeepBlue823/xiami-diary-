@@ -5,7 +5,7 @@ const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
 
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 const DEFAULT_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
-const QUOTE_PROMPT_VERSION = 'v2-perspective';
+const QUOTE_PROMPT_VERSION = 'v3-pet-name-map';
 
 function normalizePetType(petType) {
   return petType === 'dog' ? 'dog' : 'cat';
@@ -102,6 +102,7 @@ export default async function handler(req, res) {
     `本次是第 ${variantIndex + 1} 个版本，请和另外 9 个版本明显不同。`,
     '',
     '请阅读下面今天和前一天的小咪日记，理解其中的事情、情绪和关系。',
+    '日记称呼映射必须牢记：哥哥、比格、小狗都指小比格；小咪宝宝、咪宝宝、咪宝、小猫、猫猫、咪咪、小咪都指喵小咪。',
     '生成一句像这只宠物说出来的中文语录。',
     `角色语气：${petVoice}`,
     '要求：',
