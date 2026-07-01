@@ -12,6 +12,9 @@
             --summer-coral-deep: #e96558;
             --summer-sun: #ffd166;
             --summer-mint: #94d9bd;
+            --summer-sky: #bfeeff;
+            --summer-wave: #7bd5ee;
+            --summer-sea: #8ee1d2;
             --summer-cream: #fff8d8;
             --summer-paper: #fbfff6;
             --summer-card: rgba(255, 255, 255, 0.78);
@@ -28,8 +31,8 @@
         body {
             font-family: "Noto Serif SC", "STSong", "SimSun", serif;
             background:
-                repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px 18px),
-                linear-gradient(180deg, #e7fbff 0%, var(--summer-cream) 44%, #dff8ed 100%);
+                repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0 1px, transparent 1px 22px),
+                linear-gradient(180deg, #cef4ff 0%, #f7fdff 31%, var(--summer-cream) 58%, #d7f7e9 100%);
             min-height: 100vh;
             padding: 20px;
             overflow-x: hidden;
@@ -43,9 +46,24 @@
             pointer-events: none;
             z-index: 0;
             background:
-                linear-gradient(115deg, transparent 0 14%, rgba(255, 209, 102, 0.18) 14% 16%, transparent 16% 100%),
-                linear-gradient(72deg, transparent 0 76%, rgba(148, 217, 189, 0.22) 76% 78%, transparent 78% 100%),
-                linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent 34%);
+                linear-gradient(112deg, transparent 0 12%, rgba(255, 209, 102, 0.24) 12% 14%, transparent 14% 100%),
+                linear-gradient(69deg, transparent 0 74%, rgba(123, 213, 238, 0.28) 74% 76%, transparent 76% 100%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 34%);
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 36vh;
+            pointer-events: none;
+            z-index: 0;
+            background:
+                repeating-linear-gradient(172deg, transparent 0 30px, rgba(255, 255, 255, 0.24) 30px 32px),
+                linear-gradient(180deg, transparent 0%, rgba(123, 213, 238, 0.14) 30%, rgba(142, 225, 210, 0.22) 68%, rgba(255, 209, 102, 0.2) 100%);
+            mask-image: linear-gradient(180deg, transparent 0%, #000 36%);
         }
 
         .container {
@@ -467,30 +485,33 @@
             border-color: var(--summer-coral);
         }
 
-        /* 樱花花瓣飘落动画 */
-        @keyframes petalFall {
+        /* 夏日小物件飘落动画 */
+        @keyframes summerDrift {
             0% {
-                transform: translateY(-30px) rotate(0deg) translateX(0px);
-                opacity: 0.9;
+                transform: translate3d(0, -36px, 0) rotate(0deg);
+                opacity: 0;
             }
-            20% { transform: translateY(20vh) rotate(72deg) translateX(25px); }
-            40% { transform: translateY(40vh) rotate(144deg) translateX(-15px); }
-            60% { transform: translateY(60vh) rotate(216deg) translateX(20px); }
-            80% { transform: translateY(80vh) rotate(288deg) translateX(-10px); }
+            10% { opacity: var(--drift-opacity, 0.72); }
+            28% { transform: translate3d(var(--sway-a, 28px), 28vh, 0) rotate(86deg); }
+            52% { transform: translate3d(var(--sway-b, -18px), 54vh, 0) rotate(174deg); }
+            78% { transform: translate3d(var(--sway-c, 22px), 82vh, 0) rotate(268deg); }
             100% {
-                transform: translateY(108vh) rotate(360deg) translateX(0px);
+                transform: translate3d(0, 110vh, 0) rotate(360deg);
                 opacity: 0;
             }
         }
 
-        .sakura-petal {
+        .summer-drift {
             position: fixed;
             top: 0;
             pointer-events: none;
             z-index: 0;
-            animation: petalFall linear infinite;
+            animation: summerDrift linear infinite;
+            animation-fill-mode: both;
+            opacity: 0;
             user-select: none;
             line-height: 1;
+            filter: drop-shadow(0 6px 7px rgba(47, 95, 107, 0.1));
         }
 
         @media (max-width: 600px) {
@@ -509,6 +530,12 @@
 
             .btn {
                 width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .summer-drift {
+                display: none;
             }
         }
     </style>
@@ -1015,55 +1042,48 @@
             }
         }
 
-        // 创建夏日花瓣（SVG五瓣小花）
-        function createSakuraPetals() {
-            const petalColors = [
-                ['#fff0a8', '#ffd166'],
-                ['#c8f4e4', '#94d9bd'],
-                ['#bfeeff', '#7bd5ee'],
-                ['#ffd3a8', '#ff9f6e'],
-                ['#fff8d8', '#ffd166'],
+        // 创建轻量夏日光影：小浪纹、星芒和薄荷叶。
+        function createSummerDrifts() {
+            const pieces = [
+                (size) => `<svg width="${size * 1.8}" height="${size}" viewBox="0 0 64 34" xmlns="http://www.w3.org/2000/svg"><path d="M5 19c8-9 15-9 23 0s15 9 23 0" fill="none" stroke="#7bd5ee" stroke-width="3" stroke-linecap="round" opacity="0.72"/><path d="M13 25c6-5 12-5 18 0s12 5 18 0" fill="none" stroke="#94d9bd" stroke-width="2" stroke-linecap="round" opacity="0.58"/></svg>`,
+                (size) => `<svg width="${size}" height="${size}" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><g stroke="#ffd166" stroke-width="2.4" stroke-linecap="round"><line x1="22" y1="7" x2="22" y2="16"/><line x1="22" y1="28" x2="22" y2="37"/><line x1="7" y1="22" x2="16" y2="22"/><line x1="28" y1="22" x2="37" y2="22"/><line x1="12" y1="12" x2="17" y2="17"/><line x1="27" y1="27" x2="32" y2="32"/><line x1="32" y1="12" x2="27" y2="17"/><line x1="17" y1="27" x2="12" y2="32"/></g><circle cx="22" cy="22" r="4.5" fill="#ffe59b"/></svg>`,
+                (size) => `<svg width="${size}" height="${size * 1.25}" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg"><path d="M8 39C9 23 20 10 34 6c-2 17-12 30-26 33Z" fill="#94d9bd" opacity="0.72"/><path d="M10 37c8-8 14-18 22-29" fill="none" stroke="#4f8891" stroke-width="1.6" stroke-linecap="round" opacity="0.45"/></svg>`,
+                (size) => `<svg width="${size}" height="${size}" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><circle cx="22" cy="22" r="7" fill="#fff8d8" opacity="0.88"/><circle cx="22" cy="22" r="13" fill="none" stroke="#bfeeff" stroke-width="2" opacity="0.58"/></svg>`
             ];
-            for (let i = 0; i < 35; i++) {
-                const petal = document.createElement('div');
-                petal.className = 'sakura-petal';
-                const size = Math.random() * 14 + 16;
-                const colors = petalColors[Math.floor(Math.random() * petalColors.length)];
-                petal.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                    <g transform="translate(20,20)">
-                        <ellipse cx="0" cy="-11" rx="5.5" ry="9" fill="${colors[0]}" transform="rotate(0)"/>
-                        <ellipse cx="0" cy="-11" rx="5.5" ry="9" fill="${colors[0]}" transform="rotate(72)"/>
-                        <ellipse cx="0" cy="-11" rx="5.5" ry="9" fill="${colors[0]}" transform="rotate(144)"/>
-                        <ellipse cx="0" cy="-11" rx="5.5" ry="9" fill="${colors[0]}" transform="rotate(216)"/>
-                        <ellipse cx="0" cy="-11" rx="5.5" ry="9" fill="${colors[0]}" transform="rotate(288)"/>
-                        <circle cx="0" cy="0" r="4" fill="${colors[1]}"/>
-                    </g>
-                </svg>`;
-                petal.style.left = Math.random() * 100 + 'vw';
-                petal.style.animationDuration = (Math.random() * 7 + 7) + 's';
-                petal.style.animationDelay = (Math.random() * 10) + 's';
-                petal.style.opacity = (Math.random() * 0.35 + 0.5).toString();
-                document.body.appendChild(petal);
+
+            for (let i = 0; i < 26; i++) {
+                const drift = document.createElement('div');
+                drift.className = 'summer-drift';
+                const size = Math.random() * 10 + 16;
+                const piece = pieces[Math.floor(Math.random() * pieces.length)];
+                drift.innerHTML = piece(size);
+                drift.style.left = Math.random() * 100 + 'vw';
+                drift.style.animationDuration = (Math.random() * 8 + 10) + 's';
+                drift.style.animationDelay = (Math.random() * 12) + 's';
+                drift.style.setProperty('--drift-opacity', (Math.random() * 0.26 + 0.48).toString());
+                drift.style.setProperty('--sway-a', (Math.random() * 42 - 8) + 'px');
+                drift.style.setProperty('--sway-b', (Math.random() * -34 - 8) + 'px');
+                drift.style.setProperty('--sway-c', (Math.random() * 38 - 10) + 'px');
+                document.body.appendChild(drift);
             }
         }
 
-        // 日记卡片油菜花角落装饰
+        // 日记卡片夏日角落装饰
         function diaryCardFlowers() {
-            const y = ['#FFD700','#FFC107','#FFB300','#FFCA28','#FFE57F'];
-            const r = () => y[Math.floor(Math.random() * y.length)];
-            const f = (s, c) => `<svg width="${s}" height="${s}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g transform="translate(20,20)"><ellipse cx="0" cy="-9" rx="5" ry="7.5" fill="${c}" transform="rotate(0)"/><ellipse cx="0" cy="-9" rx="5" ry="7.5" fill="${c}" transform="rotate(90)"/><ellipse cx="0" cy="-9" rx="5" ry="7.5" fill="${c}" transform="rotate(180)"/><ellipse cx="0" cy="-9" rx="5" ry="7.5" fill="${c}" transform="rotate(270)"/><circle cx="0" cy="0" r="3.5" fill="#E65100"/></g></svg>`;
-            const leaf = (rot) => `<svg width="11" height="17" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg"><ellipse cx="10" cy="16" rx="6" ry="13" fill="#66BB6A" opacity="0.85" transform="rotate(${rot},10,16)"/><line x1="10" y1="4" x2="10" y2="28" stroke="#43A047" stroke-width="1.2" opacity="0.6"/></svg>`;
+            const wave = '<svg width="52" height="22" viewBox="0 0 72 30" xmlns="http://www.w3.org/2000/svg"><path d="M4 17c9-8 17-8 26 0s17 8 26 0" fill="none" stroke="#7bd5ee" stroke-width="3" stroke-linecap="round" opacity="0.72"/><path d="M14 23c7-5 13-5 20 0s13 5 20 0" fill="none" stroke="#94d9bd" stroke-width="2" stroke-linecap="round" opacity="0.56"/></svg>';
+            const glint = '<svg width="18" height="18" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><g stroke="#ffd166" stroke-width="3" stroke-linecap="round"><line x1="22" y1="6" x2="22" y2="16"/><line x1="22" y1="28" x2="22" y2="38"/><line x1="6" y1="22" x2="16" y2="22"/><line x1="28" y1="22" x2="38" y2="22"/></g><circle cx="22" cy="22" r="4" fill="#ffe59b"/></svg>';
+            const leaf = (rot) => `<svg width="15" height="22" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg"><path d="M4 28C5 15 11 7 18 3c-2 9-6 18-14 25Z" fill="#8ee1d2" opacity="0.82" transform="rotate(${rot},10,16)"/></svg>`;
             return `
-                <div style="position:absolute;top:-14px;right:10px;display:flex;align-items:flex-end;gap:2px;pointer-events:none;">
-                    ${leaf(-15)}${f(13,r())}${f(20,r())}${f(14,r())}${leaf(15)}
+                <div style="position:absolute;top:-12px;right:12px;display:flex;align-items:center;gap:3px;pointer-events:none;">
+                    ${leaf(-8)}${wave}${glint}
                 </div>
-                <div style="position:absolute;bottom:-14px;left:8px;display:flex;align-items:flex-end;gap:2px;pointer-events:none;">
-                    ${leaf(-10)}${f(15,r())}${f(19,r())}${f(13,r())}${leaf(12)}
+                <div style="position:absolute;bottom:-12px;left:10px;display:flex;align-items:center;gap:3px;pointer-events:none;">
+                    ${glint}${wave}${leaf(10)}
                 </div>`;
         }
 
         // 初始化
-        createSakuraPetals();
+        createSummerDrifts();
         updateDate();
         checkAuth().then(isLoggedIn => {
             if (isLoggedIn) {
