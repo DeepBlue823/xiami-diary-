@@ -593,6 +593,12 @@
             transition: transform 0.3s, filter 0.3s;
         }
 
+        .pet:focus-visible {
+            outline: 3px solid rgba(255, 127, 114, 0.45);
+            outline-offset: 6px;
+            border-radius: 24px;
+        }
+
         .pet:hover {
             transform: translateY(-5px) scale(1.045);
             filter: drop-shadow(0 16px 18px rgba(255, 127, 114, 0.2));
@@ -605,6 +611,40 @@
             object-fit: contain;
             user-select: none;
             pointer-events: none;
+            transition: opacity 0.12s ease;
+        }
+
+        .pet.is-frame-active {
+            filter: drop-shadow(0 18px 18px rgba(255, 127, 114, 0.24));
+            z-index: 2;
+        }
+
+        .pet.is-frame-active img {
+            opacity: 0.98;
+        }
+
+        .pet.is-page-running {
+            visibility: hidden;
+        }
+
+        .page-runner {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: var(--runner-size, 142px);
+            height: var(--runner-size, 142px);
+            pointer-events: none;
+            z-index: 999;
+            filter: drop-shadow(0 18px 18px rgba(43, 172, 190, 0.24));
+            will-change: transform;
+        }
+
+        .page-runner img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+            user-select: none;
         }
 
         .cat {
@@ -675,6 +715,17 @@
                 height: 112px;
             }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            .cat,
+            .dog {
+                animation: none;
+            }
+
+            .page-runner {
+                transition: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -686,11 +737,11 @@
         </header>
 
         <div class="pets">
-            <div class="pet cat">
-                <img src="assets/pets/cat-sticker.png" alt="灰白小猫贴纸">
+            <div class="pet cat" role="button" tabindex="0" aria-label="让小猫扭一扭">
+                <img src="assets/pets/cat-sticker-v2.png" data-idle-src="assets/pets/cat-sticker-v2.png" data-frame-srcs="assets/pets/cat-wiggle-frame.png|assets/pets/cat-left-wiggle-frame.png" alt="灰白小猫贴纸">
             </div>
-            <div class="pet dog">
-                <img src="assets/pets/dog-sticker.png" alt="棕白小狗贴纸">
+            <div class="pet dog" role="button" tabindex="0" aria-label="让小狗跑一圈">
+                <img src="assets/pets/dog-sticker.png" data-idle-src="assets/pets/dog-sticker.png" data-frame-srcs="assets/pets/dog-run-frame.png" alt="棕白小狗贴纸">
             </div>
         </div>
 
@@ -1234,8 +1285,200 @@
                 </div>`;
         }
 
+        function getPetSources(img) {
+            const idleSrc = img.dataset.idleSrc || img.getAttribute('src');
+            const frameSrcs = (img.dataset.frameSrcs || img.dataset.actionSrc || '')
+                .split('|')
+                .map((src) => src.trim())
+                .filter(Boolean);
+
+            return { idleSrc, frameSrcs };
+        }
+
+        function playPetFrames(pet, options = {}) {
+            const img = pet.querySelector('img');
+            if (!img) return;
+
+            const { idleSrc, frameSrcs } = getPetSources(img);
+            if (!frameSrcs.length) return;
+
+            window.clearInterval(pet.petFrameInterval);
+            window.clearTimeout(pet.petFrameTimer);
+
+            const frameInterval = options.frameInterval || 180;
+            const totalFrames = options.totalFrames || frameSrcs.length * 3;
+            let frame = 0;
+
+            const resetFrame = () => {
+                window.clearInterval(pet.petFrameInterval);
+                window.clearTimeout(pet.petFrameTimer);
+                img.setAttribute('src', idleSrc);
+                pet.classList.remove('is-frame-active');
+            };
+
+            const switchFrame = () => {
+                img.setAttribute('src', frameSrcs[frame % frameSrcs.length]);
+                frame += 1;
+
+                if (frame >= totalFrames) {
+                    resetFrame();
+                }
+            };
+
+            pet.classList.add('is-frame-active');
+            switchFrame();
+            pet.petFrameInterval = window.setInterval(switchFrame, frameInterval);
+            pet.petFrameTimer = window.setTimeout(resetFrame, frameInterval * totalFrames + 80);
+        }
+
+        function runPetAcrossPage(pet, options = {}) {
+            const img = pet.querySelector('img');
+            if (!img) return;
+
+            const { idleSrc, frameSrcs } = getPetSources(img);
+            if (!frameSrcs.length) return;
+
+            if (pet.pageRunner) {
+                window.cancelAnimationFrame(pet.pageRunner.petRunFrame);
+                pet.pageRunner.remove();
+                pet.pageRunner = null;
+            }
+
+            const rect = pet.getBoundingClientRect();
+            const size = Math.round(Math.max(rect.width, rect.height));
+            const duration = options.duration || 6500;
+            const runner = document.createElement('div');
+            const runnerImg = document.createElement('img');
+            const runSrc = frameSrcs[0];
+            const margin = 18;
+            const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+            const maxX = Math.max(margin, window.innerWidth - size - margin);
+            const maxY = Math.max(margin, window.innerHeight - size - margin);
+            const start = {
+                x: clamp(Math.round(rect.left), margin, maxX),
+                y: clamp(Math.round(rect.top), margin, maxY)
+            };
+            const route = [
+                start,
+                { x: maxX, y: start.y },
+                { x: maxX, y: maxY },
+                { x: margin, y: maxY },
+                { x: margin, y: margin },
+                { x: start.x, y: start.y }
+            ];
+            const segments = route.slice(0, -1).map((point, index) => {
+                const next = route[index + 1];
+                const length = Math.hypot(next.x - point.x, next.y - point.y);
+
+                return { from: point, to: next, length };
+            });
+            const totalDistance = segments.reduce((sum, segment) => sum + segment.length, 0);
+            let lastDirection = 1;
+            let startedAt = 0;
+
+            runner.className = 'page-runner';
+            runner.style.setProperty('--runner-size', `${size}px`);
+
+            runnerImg.src = runSrc;
+            runnerImg.alt = '';
+            runner.appendChild(runnerImg);
+            document.body.appendChild(runner);
+
+            pet.pageRunner = runner;
+            pet.classList.add('is-page-running');
+
+            const clearRunner = () => {
+                window.cancelAnimationFrame(runner.petRunFrame);
+                runner.remove();
+                pet.classList.remove('is-page-running');
+                if (pet.pageRunner === runner) {
+                    pet.pageRunner = null;
+                }
+            };
+
+            const moveRunner = (timestamp) => {
+                if (!startedAt) {
+                    startedAt = timestamp;
+                }
+
+                const progress = Math.min((timestamp - startedAt) / duration, 1);
+                let distance = totalDistance * progress;
+                let currentSegment = segments[segments.length - 1];
+
+                for (const segment of segments) {
+                    if (distance <= segment.length) {
+                        currentSegment = segment;
+                        break;
+                    }
+
+                    distance -= segment.length;
+                }
+
+                const segmentProgress = currentSegment.length
+                    ? distance / currentSegment.length
+                    : 1;
+                const x = currentSegment.from.x + (currentSegment.to.x - currentSegment.from.x) * segmentProgress;
+                const y = currentSegment.from.y + (currentSegment.to.y - currentSegment.from.y) * segmentProgress;
+                const dx = currentSegment.to.x - currentSegment.from.x;
+
+                if (Math.abs(dx) > 1) {
+                    lastDirection = dx > 0 ? 1 : -1;
+                }
+
+                runner.style.transform = `translate(${x}px, ${y}px) scaleX(${lastDirection})`;
+
+                if (progress < 1) {
+                    runner.petRunFrame = window.requestAnimationFrame(moveRunner);
+                } else {
+                    clearRunner();
+                }
+            };
+
+            runner.style.transform = `translate(${start.x}px, ${start.y}px) scaleX(1)`;
+            runner.petRunFrame = window.requestAnimationFrame(moveRunner);
+        }
+
+        function playPetAnimation(pet, options = {}) {
+            if (options.pageRun) {
+                runPetAcrossPage(pet, options);
+                return;
+            }
+
+            playPetFrames(pet, options);
+        }
+
+        function bindPetAction(selector, options) {
+            const pet = document.querySelector(selector);
+            if (!pet) return;
+
+            pet.addEventListener('click', () => playPetAnimation(pet, options));
+            pet.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    playPetAnimation(pet, options);
+                }
+            });
+        }
+
+        function preloadPetFrames() {
+            document.querySelectorAll('.pet img[data-frame-srcs], .pet img[data-action-src]').forEach((img) => {
+                const { idleSrc, frameSrcs } = getPetSources(img);
+                [idleSrc, ...frameSrcs].forEach((src) => {
+                    const preload = new Image();
+                    preload.src = src;
+                });
+            });
+        }
+
+        function initPetInteractions() {
+            preloadPetFrames();
+            bindPetAction('.pet.cat', { frameInterval: 320, totalFrames: 10 });
+            bindPetAction('.pet.dog', { pageRun: true, duration: 6500 });
+        }
+
         // 初始化
         createSakuraPetals();
+        initPetInteractions();
         updateDate();
         fetchDiaries();
     </script>
