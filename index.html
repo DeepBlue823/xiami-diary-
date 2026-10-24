@@ -3,843 +3,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f6f0e6">
     <title>小咪的日记本</title>
     <style>
         :root {
-            --summer-ink: #2f5f6b;
-            --summer-ink-soft: #4f8891;
-            --summer-coral: #ff7f72;
-            --summer-coral-deep: #e96558;
-            --summer-sun: #ffd166;
-            --summer-mint: #94d9bd;
-            --summer-sky: #bfeeff;
-            --summer-wave: #7bd5ee;
-            --summer-sea: #8ee1d2;
-            --summer-cream: #fff8d8;
-            --summer-paper: #fbfff6;
-            --summer-card: rgba(255, 255, 255, 0.78);
-            --summer-line: #b8eadf;
-            --summer-shadow: rgba(47, 95, 107, 0.13);
+            color-scheme: light;
+            --ink: #513b2e;
+            --muted: #88705e;
+            --accent: #a74f31;
+            --accent-dark: #843e27;
+            --paper: #fffcf6;
+            --line: #e7daca;
+            --warm: #f4e5d2;
+            /* Keep these aliases for existing interactive components. */
+            --summer-ink: var(--ink);
+            --summer-ink-soft: var(--muted);
+            --summer-coral: var(--accent);
+            --summer-coral-deep: var(--accent-dark);
+            --summer-sun: #c99b45;
+            --summer-mint: #909469;
+            --summer-sky: #ead9b7;
+            --summer-wave: #bd8255;
+            --summer-sea: #9b9b75;
+            --summer-cream: #f6f0e6;
+            --summer-paper: var(--paper);
+            --summer-card: var(--paper);
+            --summer-line: var(--line);
+            --summer-shadow: rgba(81, 59, 46, 0.07);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-padding-top: 24px; }
         body {
-            font-family: "Noto Serif SC", "STSong", "SimSun", serif;
-            background:
-                repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0 1px, transparent 1px 22px),
-                linear-gradient(180deg, #cef4ff 0%, #f7fdff 31%, var(--summer-cream) 58%, #d7f7e9 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #f6f0e6;
+            color: var(--ink);
             min-height: 100vh;
-            padding: 20px;
+            padding: 28px 28px 50px;
             overflow-x: hidden;
-            position: relative;
         }
-
         body::before {
             content: '';
             position: fixed;
             inset: 0;
             pointer-events: none;
             z-index: 0;
-            background:
-                linear-gradient(112deg, transparent 0 12%, rgba(255, 209, 102, 0.24) 12% 14%, transparent 14% 100%),
-                linear-gradient(69deg, transparent 0 74%, rgba(123, 213, 238, 0.28) 74% 76%, transparent 76% 100%),
-                linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 34%);
+            opacity: 0.42;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Ccircle cx='1' cy='1' r='.45' fill='%23c8b89e' opacity='.4'/%3E%3C/svg%3E");
         }
-
-        body::after {
-            content: '';
-            position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            height: 36vh;
-            pointer-events: none;
-            z-index: 0;
-            background:
-                repeating-linear-gradient(172deg, transparent 0 30px, rgba(255, 255, 255, 0.24) 30px 32px),
-                linear-gradient(180deg, transparent 0%, rgba(123, 213, 238, 0.14) 30%, rgba(142, 225, 210, 0.22) 68%, rgba(255, 209, 102, 0.2) 100%);
-            mask-image: linear-gradient(180deg, transparent 0%, #000 36%);
+        button, input { font: inherit; }
+        button, a, [role="button"] { -webkit-tap-highlight-color: transparent; }
+        button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
+            outline: 3px solid #b57842;
+            outline-offset: 4px;
         }
-
-        .container {
-            max-width: 860px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 1;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 28px;
-            padding-top: 10px;
-            position: relative;
-        }
-
-        header::after {
-            content: '';
-            display: block;
-            width: min(420px, 72vw);
-            height: 8px;
-            margin: 16px auto 0;
-            background:
-                linear-gradient(90deg, transparent, rgba(255, 127, 114, 0.34), rgba(255, 209, 102, 0.42), rgba(148, 217, 189, 0.34), transparent);
-            border-radius: 999px;
-        }
-
-        h1 {
-            font-size: 2.5em;
-            color: var(--summer-ink);
-            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.82), 0 10px 20px rgba(47, 95, 107, 0.11);
-            letter-spacing: 0.2em;
-            margin-bottom: 10px;
-        }
-
-        .date-display {
-            font-size: 1.2em;
-            color: var(--summer-ink-soft);
-            font-style: italic;
-        }
-
-        /* 日历样式 */
-        .calendar {
-            background: var(--summer-card);
-            border-radius: 18px;
-            padding: 22px;
-            margin-bottom: 25px;
-            box-shadow: 0 18px 42px var(--summer-shadow);
-            border: 1px solid var(--summer-line);
-            backdrop-filter: blur(14px);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .calendar::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            background:
-                linear-gradient(90deg, rgba(255, 209, 102, 0.15), transparent 28%),
-                linear-gradient(180deg, rgba(255, 255, 255, 0.62), transparent 38%);
-        }
-
-        .calendar-header {
+        .container { max-width: 1120px; margin: 0 auto; position: relative; z-index: 1; }
+        .season-bar {
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            position: relative;
-            z-index: 1;
+            gap: 12px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.16em;
         }
-
-        .calendar-header button {
-            background: linear-gradient(135deg, var(--summer-coral), var(--summer-sun));
-            color: white;
-            border: none;
-            width: 42px;
-            height: 42px;
-            padding: 0;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1em;
-            transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(255, 127, 114, 0.28);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .calendar-header button:hover {
-            background: linear-gradient(135deg, var(--summer-coral-deep), #f6b44f);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(255, 127, 114, 0.35);
-        }
-
-        .calendar-header span {
-            font-size: 1.3em;
-            color: var(--summer-ink);
-            font-weight: bold;
-        }
-
-        .calendar-weekdays {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            text-align: center;
-            margin-bottom: 10px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .calendar-weekdays span {
-            color: var(--summer-ink-soft);
-            font-size: 0.9em;
-            padding: 5px;
-        }
-
-        .calendar-days {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .calendar-day {
-            aspect-ratio: 1;
+        .season-label { display: inline-flex; align-items: center; gap: 9px; }
+        .season-label svg { width: 18px; height: 22px; color: var(--accent); }
+        .season-note { letter-spacing: 0.08em; }
+        header {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background 0.3s, box-shadow 0.3s, transform 0.3s;
-            position: relative;
-            font-size: 0.95em;
-            color: #356b72;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 30px 12px 30px 0;
         }
-
-        .calendar-day:hover {
-            background: #fff3c4;
-            box-shadow: inset 0 0 0 1px rgba(255, 127, 114, 0.24);
-            transform: translateY(-1px);
+        .header-copy { min-width: 0; }
+        h1, h2, .diary-item .title {
+            font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
         }
-
-        .calendar-day {
-            position: relative;
-        }
-
-        .calendar-tooltip {
-            display: none;
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #2f5f6b;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 0.75em;
-            white-space: nowrap;
-            z-index: 100;
-            margin-bottom: 5px;
-            box-shadow: 0 2px 10px rgba(139, 58, 90, 0.2);
-        }
-
-        .calendar-tooltip::after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 6px solid transparent;
-            border-top-color: #2f5f6b;
-        }
-
-        .calendar-day:hover .calendar-tooltip {
-            display: block;
-        }
-
-        .calendar-day.other-month {
-            color: #e0b0c0;
-        }
-
-        .calendar-day.today {
-            background: #fff3c4;
-            font-weight: bold;
-            border: 2px solid var(--summer-coral);
-            box-shadow: 0 7px 14px rgba(255, 127, 114, 0.16);
-        }
-
-        .calendar-day.has-diary {
-            font-weight: bold;
-            background-color: var(--diary-color, #f06292);
-            color: white;
-        }
-
-        .calendar-day.has-diary:hover {
-            opacity: 0.85;
-        }
-
-        .calendar-day.is-meeting {
-            background-color: #ce93d8;
-            color: white;
-            font-weight: bold;
-        }
-
-        .calendar-day.is-meeting:hover {
-            opacity: 0.85;
-        }
-
-        .diary-marker {
-            display: none;
-        }
-
-        /* 特殊日期标记 */
-        .special-marker {
-            position: absolute;
-            bottom: 0;
-            font-size: 1em;
-        }
-
-        .anniversary-marker {
-            color: var(--summer-coral);
-        }
-
-        .birthday-marker {
-            color: #FFD700;
-        }
-
-        /* 在一起的时间 */
+        h1 { font-size: 39px; font-weight: 600; letter-spacing: 0.08em; line-height: 1.4; }
+        .header-subtitle { color: var(--muted); font-size: 13px; line-height: 1.7; margin-top: 9px; letter-spacing: 0.04em; }
+        .header-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; margin-top: 19px; }
+        .date-display { font-size: 12px; color: var(--muted); }
         .together-time {
-            font-size: 1em;
-            color: var(--summer-coral-deep);
-            margin-top: 5px;
-            font-weight: bold;
-        }
-
-        /* 日记列表样式 */
-        .diary-list {
-            margin-top: 20px;
-        }
-
-        .diary-list h2 {
-            color: var(--summer-ink);
-            font-size: 1.5em;
-            margin-bottom: 20px;
-            text-align: center;
-            border-bottom: 0;
-            padding-bottom: 16px;
-            position: relative;
-        }
-
-        .diary-list h2::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            bottom: 0;
-            width: min(520px, 84vw);
-            height: 3px;
-            transform: translateX(-50%);
-            background: linear-gradient(90deg, transparent, var(--summer-line), var(--summer-sun), var(--summer-line), transparent);
-            border-radius: 999px;
-        }
-
-        .diary-item {
-            background: var(--summer-card);
-            border-radius: 16px;
-            padding: 22px;
-            margin-bottom: 18px;
-            box-shadow: 0 14px 32px rgba(47, 95, 107, 0.1);
-            border: 1px solid rgba(184, 234, 223, 0.78);
-            border-left: 5px solid var(--summer-coral);
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
-            position: relative;
-            backdrop-filter: blur(10px);
-        }
-
-        .diary-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 28px rgba(55, 151, 164, 0.18);
-        }
-
-        .diary-item .date {
-            color: var(--summer-ink-soft);
-            font-size: 0.9em;
-            margin-bottom: 8px;
-        }
-
-        .diary-item .title {
-            color: var(--summer-ink);
-            font-size: 1.2em;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .diary-item .preview {
-            color: #4f7f83;
-            font-size: 0.95em;
+            font-size: 11px;
+            color: var(--accent-dark);
+            background: #efe0cc;
+            border: 1px solid #e4cfb3;
+            padding: 6px 10px;
+            border-radius: 100px;
             line-height: 1.5;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
         }
-
-        .diary-item.expanded .preview {
-            -webkit-line-clamp: unset;
-            overflow: visible;
-        }
-
-        .diary-item .expand-hint {
-            color: var(--summer-ink-soft);
-            font-size: 0.85em;
-            text-align: right;
-            margin-top: 8px;
-            font-style: italic;
-        }
-
-        .diary-item .mood {
-            font-size: 1.2em;
-            margin-top: 10px;
-        }
-
-        /* 评论样式 */
-        .diary-comments {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid var(--summer-line);
-        }
-
-        .comments-title {
-            color: var(--summer-ink-soft);
-            font-size: 0.95em;
-            margin-bottom: 10px;
-        }
-
-        .comment-list {
-            margin-bottom: 12px;
-        }
-
-        .comment-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            margin-bottom: 8px;
-            padding: 9px 10px;
-            background: rgba(243, 251, 248, 0.86);
-            border: 1px solid rgba(184, 234, 223, 0.62);
-            border-radius: 10px;
-        }
-
-        .comment-item .emoji {
-            font-size: 1.2em;
-        }
-
-        .comment-item .content {
-            color: #3f7378;
-            font-size: 0.9em;
-            flex: 1;
-        }
-
-        .comment-item .time {
-            color: #c0a0b0;
-            font-size: 0.75em;
-        }
-
-        .comment-item .delete-btn {
-            background: none;
-            border: none;
-            color: #e0c0cc;
-            cursor: pointer;
-            font-size: 0.9em;
-            padding: 2px 5px;
-            opacity: 0;
-            transition: opacity 0.3s, color 0.3s;
-        }
-
-        .comment-item:hover .delete-btn {
-            opacity: 1;
-        }
-
-        .comment-item .delete-btn:hover {
-            color: #FF6347;
-        }
-
-        .comment-item .user-badge {
-            font-size: 0.7em;
-            padding: 2px 6px;
-            border-radius: 10px;
-            margin-right: 5px;
-        }
-
-        .comment-item .user-badge.me {
-            background: #FFD700;
-            color: #356b72;
-        }
-
-        .comment-item .user-badge.girlfriend {
-            background: var(--summer-coral);
-            color: white;
-        }
-
-        .user-selector {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 8px;
-        }
-
-        .user-selector button {
-            padding: 4px 12px;
-            border: 2px solid var(--summer-line);
-            background: white;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 0.85em;
-            transition: all 0.3s;
-        }
-
-        .user-selector button.active {
-            border-color: var(--summer-coral);
-            background: var(--summer-coral);
-            color: white;
-        }
-
-        .user-selector button.girlfriend.active {
-            border-color: var(--summer-coral);
-            background: var(--summer-coral);
-        }
-
-        .user-selector button.me.active {
-            border-color: #FFD700;
-            background: #FFD700;
-            color: #356b72;
-        }
-
-        .comment-input-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .comment-input {
-            flex: 1;
-            padding: 8px 12px;
-            border: 1px solid var(--summer-line);
-            border-radius: 20px;
-            font-size: 0.9em;
-            outline: none;
-            font-family: inherit;
-            background: rgba(255, 255, 255, 0.86);
-        }
-
-        .comment-input:focus {
-            border-color: var(--summer-coral);
-        }
-
-        .emoji-picker {
-            display: none;
-            position: absolute;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 8px 20px rgba(55, 151, 164, 0.14);
-            padding: 8px;
-            gap: 5px;
-            flex-wrap: wrap;
-            width: 180px;
-            z-index: 10;
-        }
-
-        .emoji-picker.show {
-            display: flex;
-        }
-
-        .emoji-picker button {
-            background: none;
-            border: none;
-            font-size: 1.3em;
-            cursor: pointer;
-            padding: 3px;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-
-        .emoji-picker button:hover {
-            background: #fff3c4;
-        }
-
-        .emoji-btn {
-            position: relative;
-            background: none;
-            border: none;
-            font-size: 1.3em;
-            cursor: pointer;
-            padding: 4px;
-        }
-
-        .comment-submit {
-            background: linear-gradient(135deg, var(--summer-coral), var(--summer-sun));
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.3s;
-        }
-
-        .comment-submit:hover {
-            background: linear-gradient(135deg, var(--summer-coral-deep), #f6b44f);
-            transform: translateY(-1px);
-        }
-
-        .empty-state {
-            text-align: center;
-            color: var(--summer-ink-soft);
-            padding: 40px;
-            font-style: italic;
-        }
-
-        .loading {
-            text-align: center;
-            color: var(--summer-ink-soft);
-            padding: 20px;
-        }
-
-        /* 小宠物样式 */
-        .pets {
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            gap: 32px;
-            margin: 8px 0 32px;
-            min-height: 150px;
-        }
-
+        .pet-companions { flex: 0 0 auto; text-align: center; }
+        .pets { display: flex; justify-content: center; align-items: flex-end; gap: 14px; min-height: 114px; }
         .pet {
+            width: 112px;
+            height: 112px;
             position: relative;
             cursor: pointer;
-            width: 142px;
-            height: 142px;
-            filter: drop-shadow(0 15px 16px rgba(47, 95, 107, 0.13));
-            transition: transform 0.3s, filter 0.3s;
-        }
-
-        .pet:focus-visible {
-            outline: 3px solid rgba(255, 127, 114, 0.45);
-            outline-offset: 6px;
+            filter: drop-shadow(0 8px 7px rgba(99, 67, 38, 0.12));
+            transition: filter 0.2s;
             border-radius: 24px;
         }
-
-        .pet:hover {
-            transform: translateY(-5px) scale(1.045);
-            filter: drop-shadow(0 16px 18px rgba(255, 127, 114, 0.2));
-        }
-
-        .pet img {
-            width: 100%;
-            height: 100%;
-            display: block;
-            object-fit: contain;
-            user-select: none;
-            pointer-events: none;
-            transition: opacity 0.12s ease;
-        }
-
-        .pet.is-frame-active {
-            filter: drop-shadow(0 18px 18px rgba(255, 127, 114, 0.24));
-            z-index: 2;
-        }
-
-        .pet.is-frame-active img {
-            opacity: 0.98;
-        }
-
-        .pet.is-page-running {
-            visibility: hidden;
-        }
-
-        .pet-quote {
-            position: fixed;
-            left: 50%;
-            top: 50%;
-            width: min(280px, calc(100vw - 36px));
-            padding: 12px 14px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.94);
-            border: 1px solid rgba(184, 234, 223, 0.9);
-            box-shadow: 0 14px 32px rgba(47, 95, 107, 0.16);
-            color: var(--summer-ink);
-            font-size: 0.9em;
-            line-height: 1.55;
-            pointer-events: none;
-            z-index: 1001;
-            transform: translate(-50%, -112%) scale(0.96);
-            opacity: 0;
-            animation: quotePop 0.42s ease forwards;
-            backdrop-filter: blur(12px);
-        }
-
-        .pet-quote .quote-name {
-            display: block;
-            color: var(--summer-coral-deep);
-            font-weight: bold;
-            margin-bottom: 3px;
-        }
-
-        .pet-quote::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            bottom: -7px;
-            width: 14px;
-            height: 14px;
-            background: rgba(255, 255, 255, 0.94);
-            border-right: 1px solid rgba(184, 234, 223, 0.9);
-            border-bottom: 1px solid rgba(184, 234, 223, 0.9);
-            transform: translateX(-50%) rotate(45deg);
-        }
-
-        .page-runner {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: var(--runner-size, 142px);
-            height: var(--runner-size, 142px);
-            pointer-events: none;
-            z-index: 999;
-            filter: drop-shadow(0 18px 18px rgba(43, 172, 190, 0.24));
-            will-change: transform;
-        }
-
-        .page-runner img {
-            width: 100%;
-            height: 100%;
-            display: block;
-            object-fit: contain;
-            user-select: none;
-        }
-
-        .cat {
-            animation: catBounce 3.2s ease-in-out infinite;
-        }
-
-        .dog {
-            animation: dogBounce 3.2s ease-in-out infinite;
-            animation-delay: 0.35s;
-        }
-
-        @keyframes quotePop {
-            0% {
-                opacity: 0;
-                transform: translate(-50%, -104%) scale(0.94);
-            }
-            100% {
-                opacity: 1;
-                transform: translate(-50%, -112%) scale(1);
-            }
-        }
-
-        /* 夏日小物件飘落动画 */
+        .pet:hover { filter: drop-shadow(0 10px 9px rgba(148, 84, 40, 0.24)); }
+        .pet img { width: 100%; height: 100%; display: block; object-fit: contain; user-select: none; pointer-events: none; transition: opacity 0.12s ease; }
+        .pet.is-frame-active { z-index: 2; }
+        .pet.is-frame-active img { opacity: 0.98; }
+        .pet.is-page-running { visibility: hidden; }
+        .pet-hint { color: var(--muted); font-size: 11px; margin-top: 8px; letter-spacing: 0.05em; }
+        .journal-layout { display: grid; grid-template-columns: minmax(0, 1fr) 326px; align-items: start; gap: 32px; }
+        .calendar-panel { grid-column: 2; grid-row: 1; position: sticky; top: 24px; min-width: 0; }
+        .diary-list { grid-column: 1; grid-row: 1; min-width: 0; scroll-margin-top: 24px; }
+        .section-heading { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 3px 0 18px; }
+        .section-heading h2 { font-size: 21px; font-weight: 600; letter-spacing: 0.08em; }
+        .section-heading p { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+        .calendar { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 22px 18px 17px; box-shadow: 0 6px 24px rgba(81, 59, 46, 0.04); scroll-margin-top: 20px; }
+        .calendar-title-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 6px; }
+        .calendar-title-row h2 { font-size: 19px; font-weight: 600; letter-spacing: 0.06em; }
+        .today-button { color: var(--accent); background: #f6eadb; border: 1px solid #ead7bd; border-radius: 7px; padding: 6px 9px; font-size: 11px; cursor: pointer; }
+        .today-button:hover { background: #eed9be; }
+        .calendar-description { font-size: 11px; color: var(--muted); line-height: 1.7; }
+        .calendar-header { display: flex; align-items: center; justify-content: space-between; margin: 20px 0 12px; }
+        .calendar-header button { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); font-size: 12px; cursor: pointer; transition: background 0.2s; }
+        .calendar-header button:hover { background: var(--warm); }
+        .calendar-header span { font-size: 14px; font-weight: 600; }
+        .calendar-weekdays, .calendar-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; }
+        .calendar-weekdays { margin-bottom: 6px; }
+        .calendar-weekdays span { font-size: 10px; color: var(--muted); padding: 5px 0; }
+        .calendar-days { gap: 4px; }
+        .calendar-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 9px; cursor: pointer; position: relative; font-size: 12px; transition: background 0.2s, box-shadow 0.2s; }
+        .calendar-day:hover { background: var(--warm); }
+        .calendar-day.other-month { color: #b9aa98; cursor: default; }
+        .calendar-day.today { font-weight: 700; box-shadow: inset 0 0 0 2px var(--accent); background: #f4e5d2; }
+        .calendar-day.has-diary { color: #fff; background: var(--diary-color, #a76345); font-weight: 600; }
+        .calendar-day.has-diary:hover { filter: brightness(0.92); }
+        .calendar-day.is-meeting { background: #858663; color: white; font-weight: 600; }
+        .calendar-day.is-meeting:hover { background: #72734e; }
+        .calendar-day.today.has-diary, .calendar-day.today.is-meeting { outline: 1px solid var(--accent); outline-offset: 2px; box-shadow: inset 0 0 0 1px var(--paper); }
+        .diary-marker { display: none; }
+        .special-marker { position: absolute; bottom: -3px; font-size: 12px; line-height: 1; }
+        .anniversary-marker { color: var(--accent); }
+        .birthday-marker { color: #c28b2d; }
+        .calendar-tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--ink); color: white; padding: 7px 9px; border-radius: 7px; font-size: 11px; width: max-content; max-width: min(230px, 70vw); white-space: normal; overflow-wrap: anywhere; line-height: 1.7; z-index: 100; margin-bottom: 7px; box-shadow: 0 3px 12px rgba(81, 59, 46, 0.1); }
+        .calendar-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: var(--ink); }
+        .calendar-day:nth-child(7n + 1) .calendar-tooltip, .calendar-day:nth-child(7n + 2) .calendar-tooltip { left: 0; transform: none; }
+        .calendar-day:nth-child(7n) .calendar-tooltip, .calendar-day:nth-child(7n - 1) .calendar-tooltip { left: auto; right: 0; transform: none; }
+        .calendar-day:hover .calendar-tooltip, .calendar-day:focus-visible .calendar-tooltip { display: block; }
+        .calendar-legend { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; border-top: 1px solid var(--line); margin-top: 17px; padding-top: 13px; color: var(--muted); font-size: 10px; }
+        .calendar-legend span { display: inline-flex; align-items: center; gap: 5px; }
+        .legend-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #a76345; }
+        .legend-dot.meeting { background: #858663; }
+        .legend-dot.today { background: transparent; border: 1.5px solid var(--accent); }
+        .sidebar-note { display: flex; align-items: center; justify-content: center; gap: 9px; padding: 20px 10px; font-family: "Songti SC", "STSong", serif; font-size: 12px; letter-spacing: 0.08em; color: #937657; }
+        .sidebar-note svg { width: 20px; height: 25px; flex: 0 0 auto; color: #bc8953; }
+        .diary-item { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; padding: 24px 26px 18px; margin-bottom: 18px; box-shadow: 0 4px 16px rgba(81, 59, 46, 0.025); cursor: pointer; position: relative; transition: box-shadow 0.2s, border-color 0.2s; scroll-margin-top: 24px; }
+        .diary-item:hover { border-color: #cfb390; box-shadow: 0 7px 22px rgba(81, 59, 46, 0.065); }
+        .diary-item.expanded { border-color: #cba87c; }
+        .diary-leaf { position: absolute; top: 18px; right: 20px; pointer-events: none; }
+        .diary-item .date { color: var(--muted); font-size: 11px; line-height: 1.8; margin-bottom: 5px; }
+        .diary-item .title { font-size: 21px; line-height: 1.6; font-weight: 600; margin: 10px 0 9px; overflow-wrap: anywhere; }
+        .diary-item .preview { white-space: pre-wrap; overflow-wrap: anywhere; color: #786352; font-size: 13px; line-height: 1.95; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .diary-item.expanded .preview { -webkit-line-clamp: unset; overflow: visible; color: #614c3e; }
+        .diary-item .expand-hint { display: block; width: 100%; border: 0; border-top: 1px solid #efe5d8; background: transparent; padding: 12px 0 0; cursor: pointer; color: var(--accent); font-size: 11px; text-align: right; margin-top: 14px; letter-spacing: 0.04em; }
+        .diary-item .mood { font-size: 17px; margin-top: 9px; }
+        .diary-comments { margin-top: 17px; padding-top: 17px; border-top: 1px solid var(--line); cursor: default; }
+        .comments-title { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+        .comment-list { margin-bottom: 12px; }
+        .comment-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; padding: 11px; background: #f8f1e8; border: 1px solid #eee0cf; border-radius: 10px; }
+        .comment-item .emoji { font-size: 17px; }
+        .comment-item .content { min-width: 0; overflow-wrap: anywhere; font-size: 12px; flex: 1; line-height: 1.8; }
+        .comment-item .time { color: var(--muted); font-size: 10px; }
+        .comment-item .delete-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 2px 5px; opacity: 0; transition: opacity 0.2s; }
+        .comment-item:hover .delete-btn, .comment-item:focus-within .delete-btn { opacity: 1; }
+        .comment-item .delete-btn:hover { color: var(--accent); }
+        .comment-item .user-badge { font-size: 9px; padding: 2px 6px; border-radius: 10px; margin-right: 5px; }
+        .comment-item .user-badge.me { background: #e3d4ac; color: var(--ink); }
+        .comment-item .user-badge.girlfriend { background: #eed0be; color: var(--accent-dark); }
+        .user-selector { display: flex; gap: 6px; margin-bottom: 10px; }
+        .user-selector button { padding: 5px 12px; border: 1px solid var(--line); background: var(--paper); border-radius: 15px; cursor: pointer; font-size: 11px; color: var(--ink); }
+        .user-selector button.active, .user-selector button.girlfriend.active { border-color: var(--accent); background: var(--accent); color: white; }
+        .user-selector button.me.active { border-color: #b39752; background: #e6d7ae; color: var(--ink); }
+        .comment-input-wrapper { display: flex; align-items: center; gap: 8px; }
+        .comment-input { flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; outline: none; background: white; color: var(--ink); }
+        .comment-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px #f1dcc7; }
+        .emoji-picker { display: none; position: absolute; right: 0; bottom: calc(100% + 8px); background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 20px rgba(81, 59, 46, 0.12); padding: 8px; gap: 5px; flex-wrap: wrap; width: 180px; z-index: 10; }
+        .emoji-picker.show { display: flex; }
+        .emoji-picker button { background: none; border: none; font-size: 18px; cursor: pointer; padding: 3px; border-radius: 4px; }
+        .emoji-picker button:hover { background: var(--warm); }
+        .emoji-btn { position: relative; background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; }
+        .comment-submit { background: var(--accent); color: white; border: none; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-size: 12px; flex: 0 0 auto; }
+        .comment-submit:hover { background: var(--accent-dark); }
+        .comment-submit:disabled { opacity: 0.6; cursor: wait; }
+        .empty-state, .loading { text-align: center; color: var(--muted); background: var(--paper); border: 1px solid var(--line); border-radius: 15px; padding: 45px 20px; font-size: 13px; line-height: 1.8; }
+        .pet-quote { position: fixed; left: 50%; top: 50%; width: 280px; max-width: calc(100vw - 24px); padding: 13px 15px; border-radius: 14px; background: var(--paper); border: 1px solid #d9bd98; box-shadow: 0 10px 30px rgba(81, 59, 46, 0.16); color: var(--ink); font-size: 13px; line-height: 1.75; pointer-events: none; z-index: 1001; transform: translateY(4px) scale(0.98); opacity: 0; animation: quotePop 0.2s ease forwards; }
+        .pet-quote .quote-name { display: block; color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+        .pet-quote::after { content: ''; position: absolute; left: var(--quote-tail-left, 50%); bottom: -7px; width: 12px; height: 12px; background: var(--paper); border-right: 1px solid #d9bd98; border-bottom: 1px solid #d9bd98; transform: translateX(-50%) rotate(45deg); }
+        .pet-quote.is-below::after { bottom: auto; top: -7px; transform: translateX(-50%) rotate(225deg); }
+        .page-runner { position: fixed; left: 0; top: 0; width: var(--runner-size, 112px); height: var(--runner-size, 112px); pointer-events: none; z-index: 999; filter: drop-shadow(0 10px 10px rgba(99, 67, 38, 0.15)); will-change: transform; }
+        .page-runner img { width: 100%; height: 100%; display: block; object-fit: contain; user-select: none; }
+        .cat { animation: catBounce 3.2s ease-in-out infinite; }
+        .dog { animation: dogBounce 3.2s ease-in-out infinite; animation-delay: 0.35s; }
+        .calendar-shortcut { display: none; }
+        @keyframes quotePop { from { opacity: 0; transform: translateY(4px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes catBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes dogBounce { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-5px) rotate(2deg); } }
         @keyframes summerDrift {
-            0% {
-                transform: translate3d(0, -36px, 0) rotate(0deg);
-                opacity: 0;
-            }
-            10% { opacity: var(--drift-opacity, 0.72); }
+            0% { transform: translate3d(0, -36px, 0) rotate(0deg); opacity: 0; }
+            10% { opacity: var(--drift-opacity, 0.45); }
             28% { transform: translate3d(var(--sway-a, 28px), 28vh, 0) rotate(86deg); }
             52% { transform: translate3d(var(--sway-b, -18px), 54vh, 0) rotate(174deg); }
             78% { transform: translate3d(var(--sway-c, 22px), 82vh, 0) rotate(268deg); }
-            100% {
-                transform: translate3d(0, 110vh, 0) rotate(360deg);
-                opacity: 0;
-            }
+            100% { transform: translate3d(0, 110vh, 0) rotate(360deg); opacity: 0; }
         }
-
-        .summer-drift {
-            position: fixed;
-            top: 0;
-            pointer-events: none;
-            z-index: 0;
-            animation: summerDrift linear infinite;
-            animation-fill-mode: both;
-            opacity: 0;
-            user-select: none;
-            line-height: 1;
-            filter: drop-shadow(0 6px 7px rgba(47, 95, 107, 0.1));
+        .summer-drift { position: fixed; top: 0; pointer-events: none; z-index: 0; animation: summerDrift linear infinite; animation-fill-mode: both; opacity: 0; user-select: none; line-height: 1; }
+        @media (max-width: 900px) {
+            .journal-layout { grid-template-columns: minmax(0, 1fr) 290px; gap: 22px; }
+            h1 { font-size: 34px; }
+            .calendar { padding: 19px 14px 16px; }
+            .diary-item { padding: 21px 21px 17px; }
         }
-
-        @keyframes catBounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+        @media (max-width: 720px) {
+            body { padding: 17px 16px 90px; }
+            .season-bar { padding-bottom: 12px; font-size: 9px; letter-spacing: 0.12em; }
+            .season-note { font-size: 9px; }
+            header { gap: 10px; padding: 23px 0 22px; align-items: center; }
+            h1 { font-size: 27px; letter-spacing: 0.04em; }
+            .header-subtitle { font-size: 11px; margin-top: 5px; max-width: 220px; }
+            .header-meta { gap: 7px; margin-top: 12px; }
+            .date-display { font-size: 10px; }
+            .together-time { font-size: 9px; padding: 4px 8px; }
+            .pets { gap: 0; min-height: 76px; }
+            .pet { width: 68px; height: 76px; }
+            .pet-hint { font-size: 9px; margin-top: 5px; letter-spacing: 0; }
+            .journal-layout { display: flex; flex-direction: column; gap: 25px; }
+            .calendar-panel { position: static; width: 100%; }
+            .calendar { padding: 17px 16px 13px; border-radius: 14px; }
+            .calendar-title-row h2 { font-size: 17px; }
+            .calendar-description { font-size: 10px; }
+            .calendar-header { margin: 12px 0 7px; }
+            .calendar-header button { width: 30px; height: 30px; }
+            .calendar-header span { font-size: 13px; }
+            .calendar-weekdays { margin-bottom: 4px; }
+            .calendar-days { gap: 3px; }
+            .calendar-day { aspect-ratio: auto; height: 32px; font-size: 11px; border-radius: 7px; }
+            .calendar-legend { margin-top: 12px; padding-top: 10px; font-size: 9px; }
+            .sidebar-note { display: none; }
+            .diary-list { width: 100%; }
+            .section-heading { padding: 0 0 14px; }
+            .section-heading h2 { font-size: 19px; }
+            .section-heading p { font-size: 10px; }
+            .diary-item { padding: 19px 18px 15px; margin-bottom: 15px; border-radius: 13px; }
+            .diary-item .title { font-size: 20px; margin-top: 8px; }
+            .diary-item .preview { font-size: 13px; }
+            .comment-item .delete-btn { opacity: 1; }
+            .comment-input { font-size: 16px; }
+            .calendar-shortcut { display: inline-flex; align-items: center; gap: 6px; position: fixed; right: 18px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 20; padding: 11px 14px; border-radius: 100px; border: 1px solid #b87e52; background: var(--ink); color: #fff9ee; text-decoration: none; font-size: 11px; box-shadow: 0 4px 16px rgba(81, 59, 46, 0.18); }
+            .calendar-shortcut svg { width: 14px; height: 14px; }
         }
-
-        @keyframes dogBounce {
-            0%, 100% { transform: translateY(0) rotate(-2deg); }
-            50% { transform: translateY(-8px) rotate(2deg); }
+        @media (max-width: 380px) {
+            body { padding-left: 12px; padding-right: 12px; }
+            h1 { font-size: 25px; }
+            .pet { width: 55px; height: 67px; }
+            .pet-hint { font-size: 8px; }
+            .header-subtitle { font-size: 10px; }
+            .comment-input-wrapper { gap: 5px; }
+            .comment-submit { padding: 10px; }
         }
-
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 1.8em;
-            }
-
-            .calendar {
-                padding: 15px;
-            }
-
-            .calendar-day {
-                font-size: 0.85em;
-            }
-
-            .pets {
-                gap: 12px;
-                min-height: 124px;
-            }
-
-            .pet {
-                width: 112px;
-                height: 112px;
-            }
-        }
-
         @media (prefers-reduced-motion: reduce) {
-            .cat,
-            .dog {
-                animation: none;
-            }
-
-            .summer-drift {
-                display: none;
-            }
-
-            .page-runner {
-                transition: none;
-            }
+            html { scroll-behavior: auto; }
+            .cat, .dog, .pet-quote { animation: none; }
+            .pet-quote { opacity: 1; transform: none; }
+            .summer-drift { display: none; }
+            .page-runner { transition: none; }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="season-bar">
+            <span class="season-label"><svg viewBox="0 0 24 28" fill="none" aria-hidden="true"><path d="M12 2 15 8 20 6 18 13 23 14 16 20 13 20 12 26 11 20 8 20 1 14 6 13 4 6 9 8Z" fill="currentColor"/><path d="M12 9v14" stroke="#f6f0e6" stroke-width=".8"/></svg> OUR LITTLE DAYS · 秋日篇</span>
+            <span class="season-note">把喜欢，写进每一天</span>
+        </div>
         <header>
-            <h1>小咪的日记本</h1>
-            <div class="date-display" id="currentDate"></div>
-            <div class="together-time" id="togetherTime"></div>
+            <div class="header-copy">
+                <h1>小咪的日记本</h1>
+                <p class="header-subtitle">秋天慢慢来，我们的故事慢慢写。</p>
+                <div class="header-meta">
+                    <div class="date-display" id="currentDate"></div>
+                    <div class="together-time" id="togetherTime"></div>
+                </div>
+            </div>
+            <div class="pet-companions">
+                <div class="pets">
+                    <div class="pet cat" role="button" tabindex="0" aria-label="点点小猫，听它说句话">
+                        <img src="assets/pets/cat-sticker-v2.png" data-idle-src="assets/pets/cat-sticker-v2.png" data-frame-srcs="assets/pets/cat-wiggle-frame.png|assets/pets/cat-left-wiggle-frame.png" alt="灰白小猫贴纸">
+                    </div>
+                    <div class="pet dog" role="button" tabindex="0" aria-label="点点小狗，听它说句话">
+                        <img src="assets/pets/dog-sticker.png" data-idle-src="assets/pets/dog-sticker.png" data-frame-srcs="assets/pets/dog-run-frame.png" alt="棕白小狗贴纸">
+                    </div>
+                </div>
+                <p class="pet-hint">点点我们，听一句悄悄话</p>
+            </div>
         </header>
-
-        <div class="pets">
-            <div class="pet cat" role="button" tabindex="0" aria-label="让小猫扭一扭">
-                <img src="assets/pets/cat-sticker-v2.png" data-idle-src="assets/pets/cat-sticker-v2.png" data-frame-srcs="assets/pets/cat-wiggle-frame.png|assets/pets/cat-left-wiggle-frame.png" alt="灰白小猫贴纸">
-            </div>
-            <div class="pet dog" role="button" tabindex="0" aria-label="让小狗跑一圈">
-                <img src="assets/pets/dog-sticker.png" data-idle-src="assets/pets/dog-sticker.png" data-frame-srcs="assets/pets/dog-run-frame.png" alt="棕白小狗贴纸">
-            </div>
-        </div>
-
-        <div class="diary-list">
-            <h2>日记列表</h2>
-            <div id="diaryListContent">
-                <div class="loading">加载中...</div>
-            </div>
-        </div>
-
-        <div class="calendar">
-            <div class="calendar-header">
-                <button onclick="prevMonth()">◀</button>
-                <span id="currentMonth">2026年2月</span>
-                <button onclick="nextMonth()">▶</button>
-            </div>
-            <div class="calendar-weekdays">
-                <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
-            </div>
-            <div class="calendar-days" id="calendarDays"></div>
-        </div>
+        <main class="journal-layout">
+            <aside class="calendar-panel" aria-label="按日期翻阅日记">
+                <div class="calendar" id="calendar">
+                    <div class="calendar-title-row">
+                        <h2>日子有迹可循</h2>
+                        <button type="button" class="today-button" onclick="todayMonth()">回到本月</button>
+                    </div>
+                    <p class="calendar-description">点亮的日期，藏着我们的一天。</p>
+                    <div class="calendar-header">
+                        <button type="button" onclick="prevMonth()" aria-label="上个月">‹</button>
+                        <span id="currentMonth" aria-live="polite"></span>
+                        <button type="button" onclick="nextMonth()" aria-label="下个月">›</button>
+                    </div>
+                    <div class="calendar-weekdays" aria-hidden="true">
+                        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+                    </div>
+                    <div class="calendar-days" id="calendarDays"></div>
+                    <div class="calendar-legend">
+                        <span><i class="legend-dot"></i>有日记</span>
+                        <span><i class="legend-dot meeting"></i>见面日</span>
+                        <span><i class="legend-dot today"></i>今天</span>
+                        <span>♥ 纪念日</span>
+                    </div>
+                </div>
+                <p class="sidebar-note"><svg viewBox="0 0 24 30" fill="none" aria-hidden="true"><path d="M4 24C3 12 13 5 22 2c-1 13-8 21-18 22Z" fill="currentColor" opacity=".6"/><path d="M2 29 18 8" stroke="currentColor" stroke-width="1.3"/></svg>平凡的日子，也值得被珍藏。</p>
+            </aside>
+            <section class="diary-list" aria-labelledby="diary-heading">
+                <div class="section-heading">
+                    <h2 id="diary-heading">我们的日常</h2>
+                    <p>一页一页，都是喜欢</p>
+                </div>
+                <div id="diaryListContent" aria-live="polite">
+                    <div class="loading">正在翻开我们的日记…</div>
+                </div>
+            </section>
+        </main>
     </div>
+    <a class="calendar-shortcut" href="#calendar" aria-label="回到日历，按日期翻阅"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M6 2v4m8-4v4M3 9h14m-10 3h2m2 0h2" stroke="currentColor" stroke-width="1.4"/></svg>翻翻日历</a>
 
     <script>
         const moodEmojis = {
@@ -852,47 +356,74 @@
         };
 
         const moodColors = {
-            happy: '#FFD700',
-            love: '#FF69B4',
-            peaceful: '#87CEEB',
-            sad: '#9370DB',
-            angry: '#FF6347',
-            tired: '#A9A9A9'
+            happy: '#c58c36',
+            love: '#b46655',
+            peaceful: '#8a956c',
+            sad: '#8d7c91',
+            angry: '#b65b3c',
+            tired: '#9a8c7d'
         };
 
-        const defaultMoodColor = '#f06292';
+        const defaultMoodColor = '#bb7950';
 
         let currentYear = new Date().getFullYear();
         let currentMonth = new Date().getMonth();
         let diaries = [];
         let meetings = [];
-        let selectedEmoji = '';
-        let currentUser = localStorage.getItem('commentUser') || 'girlfriend';
+        let currentUser = 'girlfriend';
+        try {
+            if (localStorage.getItem('commentUser') === 'me') currentUser = 'me';
+        } catch { /* 浏览器禁用存储时仍可正常使用评论。 */ }
+        const pendingComments = new Set();
+        const relationshipStart = { year: 2025, month: 7, day: 29 }; // 2025年8月29日，月份从0开始
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[character]);
+        }
+
+        // 日期输入框保存的是日历日期，不能按 UTC 午夜解释。
+        function parseDiaryDate(value) {
+            if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                const [year, month, day] = value.split('-').map(Number);
+                return new Date(year, month - 1, day);
+            }
+            return new Date(value);
+        }
+
+        function daysTogether(date) {
+            return Math.floor((Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) - Date.UTC(relationshipStart.year, relationshipStart.month, relationshipStart.day)) / 86400000);
+        }
+
+        async function fetchList(url) {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('加载失败');
+            const data = await response.json();
+            if (!Array.isArray(data)) throw new Error('数据格式不正确');
+            return data;
+        }
 
         const commentEmojis = ['💕', '👍', '❤️', '😍', '😂', '🎉', '😢', '👏'];
 
-        // 创建轻量夏日光影：小浪纹、星芒和薄荷叶。
+        // 轻量秋叶装饰；减少动态效果时不创建装饰节点。
         function createSummerDrifts() {
-            const pieces = [
-                (size) => `<svg width="${size * 1.8}" height="${size}" viewBox="0 0 64 34" xmlns="http://www.w3.org/2000/svg"><path d="M5 19c8-9 15-9 23 0s15 9 23 0" fill="none" stroke="#7bd5ee" stroke-width="3" stroke-linecap="round" opacity="0.72"/><path d="M13 25c6-5 12-5 18 0s12 5 18 0" fill="none" stroke="#94d9bd" stroke-width="2" stroke-linecap="round" opacity="0.58"/></svg>`,
-                (size) => `<svg width="${size}" height="${size}" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><g stroke="#ffd166" stroke-width="2.4" stroke-linecap="round"><line x1="22" y1="7" x2="22" y2="16"/><line x1="22" y1="28" x2="22" y2="37"/><line x1="7" y1="22" x2="16" y2="22"/><line x1="28" y1="22" x2="37" y2="22"/><line x1="12" y1="12" x2="17" y2="17"/><line x1="27" y1="27" x2="32" y2="32"/><line x1="32" y1="12" x2="27" y2="17"/><line x1="17" y1="27" x2="12" y2="32"/></g><circle cx="22" cy="22" r="4.5" fill="#ffe59b"/></svg>`,
-                (size) => `<svg width="${size}" height="${size * 1.25}" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg"><path d="M8 39C9 23 20 10 34 6c-2 17-12 30-26 33Z" fill="#94d9bd" opacity="0.72"/><path d="M10 37c8-8 14-18 22-29" fill="none" stroke="#4f8891" stroke-width="1.6" stroke-linecap="round" opacity="0.45"/></svg>`,
-                (size) => `<svg width="${size}" height="${size}" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><circle cx="22" cy="22" r="7" fill="#fff8d8" opacity="0.88"/><circle cx="22" cy="22" r="13" fill="none" stroke="#bfeeff" stroke-width="2" opacity="0.58"/></svg>`
-            ];
-
-            for (let i = 0; i < 26; i++) {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const colors = ['#ba653e', '#c69545', '#9b753d'];
+            for (let i = 0; i < 9; i++) {
                 const drift = document.createElement('div');
                 drift.className = 'summer-drift';
-                const size = Math.random() * 10 + 16;
-                const piece = pieces[Math.floor(Math.random() * pieces.length)];
-                drift.innerHTML = piece(size);
-                drift.style.left = Math.random() * 100 + 'vw';
-                drift.style.animationDuration = (Math.random() * 8 + 10) + 's';
-                drift.style.animationDelay = (Math.random() * 12) + 's';
-                drift.style.setProperty('--drift-opacity', (Math.random() * 0.26 + 0.48).toString());
-                drift.style.setProperty('--sway-a', (Math.random() * 42 - 8) + 'px');
-                drift.style.setProperty('--sway-b', (Math.random() * -34 - 8) + 'px');
-                drift.style.setProperty('--sway-c', (Math.random() * 38 - 10) + 'px');
+                drift.setAttribute('aria-hidden', 'true');
+                const size = 14 + Math.random() * 10;
+                const color = colors[i % colors.length];
+                drift.innerHTML = `<svg width="${size}" height="${size * 1.4}" viewBox="0 0 30 42" xmlns="http://www.w3.org/2000/svg"><path d="M5 34C0 17 14 4 26 3c3 17-7 32-21 31Z" fill="${color}"/><path d="M3 40 22 8M10 27l10-3M14 21l-3-8" fill="none" stroke="#fff7e8" stroke-width="1.2"/></svg>`;
+                drift.style.left = `${Math.random() * 100}vw`;
+                drift.style.animationDuration = `${22 + Math.random() * 14}s`;
+                drift.style.animationDelay = `${-Math.random() * 30}s`;
+                drift.style.setProperty('--drift-opacity', '0.24');
+                drift.style.setProperty('--sway-a', '28px');
+                drift.style.setProperty('--sway-b', '-18px');
+                drift.style.setProperty('--sway-c', '22px');
                 document.body.appendChild(drift);
             }
         }
@@ -904,9 +435,7 @@
             document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-CN', options);
 
             // 计算在一起的时间
-            const startDate = new Date('2025-08-29');
-            const diffTime = now - startDate;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const diffDays = daysTogether(now);
 
             if (diffDays > 0) {
                 const loveMessages = [
@@ -926,18 +455,17 @@
         // 获取日记列表和见面日期
         async function fetchDiaries() {
             try {
-                const [diariesRes, meetingsRes] = await Promise.all([
-                    fetch('/api/diaries'),
-                    fetch('/api/diaries?action=meetings')
+                const [diaryData, meetingData] = await Promise.all([
+                    fetchList('/api/diaries'),
+                    fetchList('/api/diaries?action=meetings').catch(() => [])
                 ]);
-                diaries = await diariesRes.json();
-                meetings = await meetingsRes.json();
-                document.getElementById('diaryListContent').dataset.diaries = JSON.stringify(diaries);
+                diaries = diaryData.filter(diary => diary && diary.id != null && diary.date && !Number.isNaN(parseDiaryDate(diary.date).getTime()));
+                meetings = meetingData.filter(meeting => meeting && typeof meeting.startDate === 'string' && typeof meeting.endDate === 'string');
                 renderCalendar();
                 renderDiaryList(diaries);
             } catch (error) {
                 document.getElementById('diaryListContent').innerHTML =
-                    '<div class="empty-state">加载失败，请稍后重试</div>';
+                    '<div class="empty-state" role="alert">加载失败，请稍后重试 <button type="button" onclick="fetchDiaries()">重新加载</button></div>';
             }
         }
 
@@ -958,9 +486,14 @@
             // 特殊日期
             const girlfriendBirthday = { month: 9, day: 1 }; // 10月1日
             const myBirthday = { month: 7, day: 23 }; // 8月23日
-            const anniversary = { month: 7, day: 29 }; // 8月29日
+            const anniversary = relationshipStart;
 
             const container = document.getElementById('calendarDays');
+            const diariesByDate = new Map();
+            diaries.forEach(diary => {
+                const key = getDateKey(diary.date);
+                if (!diariesByDate.has(key)) diariesByDate.set(key, diary);
+            });
             let html = '';
 
             // 上月日期
@@ -972,12 +505,7 @@
             // 当月日期
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const diaryForDay = diaries.find(d => {
-                    const diaryDate = new Date(d.date);
-                    return diaryDate.getFullYear() === year &&
-                           diaryDate.getMonth() === month &&
-                           diaryDate.getDate() === day;
-                });
+                const diaryForDay = diariesByDate.get(dateStr);
 
                 let classes = 'calendar-day';
                 let style = '';
@@ -993,16 +521,15 @@
                     const age = year - 2004;
                     specialMarker = '<span class="special-marker birthday-marker">🎂</span>';
                     tooltip = `哥哥 ${age} 岁生日 🎂`;
-                } else if (month === anniversary.month && day === anniversary.day) {
-                    const years = year - 2025;
+                } else if (year >= anniversary.year && month === anniversary.month && day === anniversary.day) {
+                    const years = year - anniversary.year; // 满一年才是一周年，不额外加1
                     specialMarker = '<span class="special-marker anniversary-marker">💕</span>';
-                    tooltip = `在一起 ${years + 1} 周年 💕`;
+                    tooltip = years === 0 ? '我们的故事开始啦 💕' : `在一起 ${years} 周年 💕`;
                 }
 
                 // 检查在一起的倍数天
-                const startDate = new Date('2025-08-29');
                 const currentDateFull = new Date(year, month, day);
-                const diffDays = Math.floor((currentDateFull - startDate) / (1000 * 60 * 60 * 24));
+                const diffDays = daysTogether(currentDateFull);
                 if (diffDays > 0 && diffDays % 100 === 0) {
                     tooltip = `在一起 ${diffDays} 天 💕`;
                 }
@@ -1022,7 +549,7 @@
 
                 // 如果有日记，添加日记预览
                 if (diaryForDay) {
-                    const preview = diaryForDay.content ? diaryForDay.content.substring(0, 30) + '...' : '无内容';
+                    const preview = diaryForDay.content ? escapeHtml(String(diaryForDay.content).substring(0, 30)) + '...' : '无内容';
                     tooltip = tooltip ? tooltip + '<br>' + preview : preview;
                 }
 
@@ -1030,21 +557,18 @@
                     classes += ' today';
                 }
 
-                // 见面日显示猫狗图标
-                let meetingIcon = '';
+                // 以统一底色区分见面日，避免双表情挤占小尺寸日期格。
                 if (isMeetingDay) {
-                    // 同时显示猫狗
-                    meetingIcon = '🐱🐕';
+                    classes += ' is-meeting';
                 } else if (diaryForDay) {
                     classes += ' has-diary';
-                    const color = moodColors[diaryForDay.mood] || defaultMoodColor;
+                    const color = Object.prototype.hasOwnProperty.call(moodColors, diaryForDay.mood) ? moodColors[diaryForDay.mood] : defaultMoodColor;
                     style = `style="--diary-color: ${color}"`;
                 }
 
                 html += `
-                    <div class="${classes}" ${style} onclick="goToDiary('${dateStr}')">
+                    <div class="${classes}" ${style} ${diaryForDay ? `role="button" tabindex="0" aria-label="查看 ${dateStr} 的日记" onclick="goToDiary('${dateStr}')" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); goToDiary('${dateStr}'); }"` : ''}>
                         ${day}
-                        ${isMeetingDay ? meetingIcon : ''}
                         ${specialMarker}
                         ${tooltip ? `<div class="calendar-tooltip">${tooltip}</div>` : ''}
                     </div>
@@ -1053,7 +577,7 @@
 
             // 下月日期补齐
             const totalCells = firstDay + daysInMonth;
-            const remainingCells = 42 - totalCells;
+            const remainingCells = (7 - totalCells % 7) % 7;
             for (let i = 1; i <= remainingCells; i++) {
                 html += `<div class="calendar-day other-month">${i}</div>`;
             }
@@ -1081,17 +605,21 @@
             renderCalendar();
         }
 
+        function todayMonth() {
+            const today = new Date();
+            currentYear = today.getFullYear();
+            currentMonth = today.getMonth();
+            renderCalendar();
+        }
+
         // 跳转到有日记的日期
         function goToDiary(dateStr) {
-            const diary = diaries.find(d => {
-                const diaryDate = new Date(d.date);
-                const targetDate = new Date(dateStr);
-                return diaryDate.toDateString() === targetDate.toDateString();
-            });
+            const diary = diaries.find(d => getDateKey(d.date) === dateStr);
 
             if (diary) {
+                const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
                 // 滚动到日记列表
-                document.querySelector('.diary-list').scrollIntoView({ behavior: 'smooth' });
+                document.querySelector('.diary-list').scrollIntoView({ behavior });
 
                 // 找到并展开对应的日记
                 setTimeout(() => {
@@ -1101,7 +629,7 @@
                             if (!item.classList.contains('expanded')) {
                                 item.click();
                             }
-                            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            item.scrollIntoView({ behavior, block: 'center' });
                         }
                     });
                 }, 300);
@@ -1118,10 +646,10 @@
             }
 
             // 按设置日期排序（最新的在前面）
-            diaryData.sort((a, b) => new Date(b.date) - new Date(a.date));
+            const sortedDiaries = [...diaryData].sort((a, b) => parseDiaryDate(b.date) - parseDiaryDate(a.date));
 
-            container.innerHTML = diaryData.map(diary => {
-                const date = new Date(diary.date);
+            container.innerHTML = sortedDiaries.map(diary => {
+                const date = parseDiaryDate(diary.date);
                 const dateStr = date.toLocaleDateString('zh-CN', {
                     year: 'numeric',
                     month: 'long',
@@ -1135,18 +663,22 @@
                 const locationStr = locations.length > 0 ? locations.join(' | ') : '';
 
                 return `
-                    <div class="diary-item" data-id="${diary.id}" onclick="viewDiary('${diary.id}')">
+                    <div class="diary-item" data-id="${escapeHtml(diary.id)}">
                         ${diaryCardFlowers()}
                         <div class="date">${dateStr}</div>
-                        ${locationStr ? `<div class="date" style="font-size: 0.8em;">📍 ${locationStr}</div>` : ''}
-                        <div class="title">${diary.title}</div>
-                        <div class="preview">${diary.content}</div>
-                        ${diary.mood ? `<div class="mood">${moodEmojis[diary.mood]}</div>` : ''}
-                        <div class="expand-hint">点击展开</div>
-                        <div class="diary-comments" id="comments-${diary.id}" style="display: none;" onclick="event.stopPropagation()"></div>
+                        ${locationStr ? `<div class="date" style="font-size: 0.8em;">📍 ${escapeHtml(locationStr)}</div>` : ''}
+                        <div class="title">${escapeHtml(diary.title)}</div>
+                        <div class="preview">${escapeHtml(diary.content)}</div>
+                        ${Object.prototype.hasOwnProperty.call(moodEmojis, diary.mood) ? `<div class="mood">${moodEmojis[diary.mood]}</div>` : ''}
+                        <button type="button" class="expand-hint" aria-expanded="false">点击展开</button>
+                        <div class="diary-comments" id="comments-${escapeHtml(diary.id)}" style="display: none;"></div>
                     </div>
                 `;
             }).join('');
+            container.querySelectorAll('.diary-item').forEach(item => {
+                item.addEventListener('click', () => viewDiary(item.dataset.id));
+                item.querySelector('.diary-comments').addEventListener('click', event => event.stopPropagation());
+            });
         }
 
         // 查看/展开日记详情
@@ -1161,6 +693,7 @@
 
                     // 更新提示文字
                     let hint = item.querySelector('.expand-hint');
+                    hint?.setAttribute('aria-expanded', String(item.classList.contains('expanded')));
                     if (item.classList.contains('expanded')) {
                         if (!hint) {
                             hint = document.createElement('div');
@@ -1187,20 +720,29 @@
 
         // 加载评论
         async function loadComments(diaryId, container) {
+            if (!container) return;
+            const requestId = String(Number(container.dataset.requestId || 0) + 1);
+            container.dataset.requestId = requestId;
             try {
-                const response = await fetch(`/api/diaries?action=comments&diaryId=${diaryId}`);
-                const comments = await response.json();
-
+                const comments = await fetchList(`/api/diaries?action=comments&diaryId=${encodeURIComponent(diaryId)}`);
+                if (container.dataset.requestId !== requestId) return;
                 renderComments(diaryId, comments, container);
             } catch (error) {
-                console.error('加载评论失败:', error);
+                if (container.dataset.requestId !== requestId) return;
+                // 保留已有草稿，避免刷新评论失败时丢失输入。
+                if (!container.querySelector('.comment-input')) renderComments(diaryId, [], container);
+                container.querySelector('.comment-status').textContent = '评论加载失败，请收起后重试。';
             }
+        }
+
+        function getCommentToken() {
+            try { return localStorage.getItem('xiami_token') || ''; } catch { return ''; }
         }
 
         // 渲染评论
         function renderComments(diaryId, comments, container) {
             const getUserBadge = (user) => {
-                if (user === 'me') {
+                if (user === 'me' || user === 'boyfriend') {
                     return '<span class="user-badge me">哥哥</span>';
                 } else if (user === 'girlfriend') {
                     return '<span class="user-badge girlfriend">小咪</span>';
@@ -1211,13 +753,13 @@
             const commentsHtml = comments.length > 0 ? `
                 <div class="comments-title" onclick="event.stopPropagation()">评论 (${comments.length})</div>
                 <div class="comment-list" onclick="event.stopPropagation()">
-                    ${comments.map(c => `
+                    ${comments.filter(c => c && typeof c === 'object').map(c => `
                         <div class="comment-item">
                             ${getUserBadge(c.user)}
-                            <span class="emoji">${c.emoji || '💬'}</span>
-                            <span class="content">${c.content}</span>
+                            <span class="emoji">${escapeHtml(c.emoji || '💬')}</span>
+                            <span class="content">${escapeHtml(c.content)}</span>
                             <span class="time">${new Date(c.createdAt).toLocaleDateString('zh-CN')}</span>
-                            <button class="delete-btn" onclick="event.stopPropagation(); deleteComment(${diaryId}, ${c.id})">🗑️</button>
+                            ${getCommentToken() ? `<button type="button" class="delete-btn" aria-label="删除评论" data-comment-id="${escapeHtml(c.id)}">🗑️</button>` : ''}
                         </div>
                     `).join('')}
                 </div>
@@ -1230,37 +772,53 @@
                     <button class="me ${currentUser === 'me' ? 'active' : ''}" onclick="selectUser('me')">哥哥</button>
                 </div>
                 <div class="comment-input-wrapper" style="position: relative;" onclick="event.stopPropagation()">
-                    <input type="text" class="comment-input" id="input-${diaryId}"
-                           placeholder="添加评论..." onkeypress="handleCommentKeypress(event, ${diaryId})">
-                    <button class="emoji-btn" onclick="event.stopPropagation(); toggleEmojiPicker(${diaryId})">😊</button>
-                    <div class="emoji-picker" id="emoji-picker-${diaryId}">
-                        ${commentEmojis.map(e => `<button onclick="event.stopPropagation(); selectEmoji('${e}', ${diaryId})">${e}</button>`).join('')}
+                    <input type="text" class="comment-input" id="input-${escapeHtml(diaryId)}"
+                           placeholder="添加评论..." aria-label="评论内容" maxlength="2000">
+                    <button type="button" class="emoji-btn" aria-label="选择表情" aria-expanded="false">😊</button>
+                    <div class="emoji-picker" id="emoji-picker-${escapeHtml(diaryId)}">
+                        ${commentEmojis.map(e => `<button type="button" data-emoji="${e}" aria-label="添加表情 ${e}">${e}</button>`).join('')}
                     </div>
-                    <button class="comment-submit" onclick="event.stopPropagation(); submitComment(${diaryId})">发送</button>
+                    <button type="button" class="comment-submit">发送</button>
                 </div>
+                <div class="comment-status" role="status" aria-live="polite"></div>
             `;
+            container.querySelector('.comment-input').addEventListener('keydown', event => handleCommentKeypress(event, diaryId));
+            container.querySelector('.emoji-btn').addEventListener('click', () => toggleEmojiPicker(diaryId));
+            container.querySelector('.comment-submit').addEventListener('click', () => submitComment(diaryId));
+            container.querySelectorAll('[data-emoji]').forEach(button => {
+                button.addEventListener('click', () => selectEmoji(button.dataset.emoji, diaryId));
+            });
+            container.querySelectorAll('[data-comment-id]').forEach(button => {
+                button.addEventListener('click', () => deleteComment(diaryId, button.dataset.commentId));
+            });
         }
 
         // 选择评论用户
         function selectUser(user) {
+            if (!['girlfriend', 'me'].includes(user)) return;
             currentUser = user;
-            localStorage.setItem('commentUser', user);
+            try { localStorage.setItem('commentUser', user); } catch { /* 仅保存本次会话的选择。 */ }
 
             // 更新按钮状态
             document.querySelectorAll('.user-selector button').forEach(btn => {
-                btn.classList.remove('active');
+                btn.classList.toggle('active', btn.classList.contains(user));
             });
-            document.querySelector(`.user-selector button.${user}`).classList.add('active');
         }
 
         // 删除评论
         async function deleteComment(diaryId, commentId) {
+            const token = getCommentToken();
+            const commentsContainer = document.getElementById(`comments-${diaryId}`);
+            if (!token) {
+                commentsContainer.querySelector('.comment-status').textContent = '请先在编辑页登录，再删除评论。';
+                return;
+            }
             if (!confirm('确定删除这条评论吗？')) return;
 
             try {
                 const response = await fetch('/api/diaries', {
                     method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                     body: JSON.stringify({
                         action: 'deleteComment',
                         diaryId: diaryId,
@@ -1270,13 +828,13 @@
 
                 const result = await response.json();
 
-                if (result.success) {
+                if (response.ok && result.success) {
                     // 重新加载评论
                     const commentsContainer = document.getElementById(`comments-${diaryId}`);
                     await loadComments(diaryId, commentsContainer);
-                }
+                } else throw new Error(result.error || '删除评论失败，请重试。');
             } catch (error) {
-                console.error('删除评论失败:', error);
+                commentsContainer.querySelector('.comment-status').textContent = error.message || '删除评论失败，请重试。';
             }
         }
 
@@ -1284,83 +842,98 @@
         function toggleEmojiPicker(diaryId) {
             const picker = document.getElementById(`emoji-picker-${diaryId}`);
             picker.classList.toggle('show');
+            picker.parentElement.querySelector('.emoji-btn').setAttribute('aria-expanded', String(picker.classList.contains('show')));
         }
 
         // 选择表情
         function selectEmoji(emoji, diaryId) {
             const input = document.getElementById(`input-${diaryId}`);
+            if (input.value.length + emoji.length > input.maxLength) return;
             input.value += emoji;
-            selectedEmoji = emoji;
+            input.dataset.emoji = emoji;
 
             const picker = document.getElementById(`emoji-picker-${diaryId}`);
             picker.classList.remove('show');
+            picker.parentElement.querySelector('.emoji-btn').setAttribute('aria-expanded', 'false');
+            input.focus();
         }
 
         // 提交评论
         async function submitComment(diaryId) {
+            const pendingKey = String(diaryId);
+            if (pendingComments.has(pendingKey)) return;
             const input = document.getElementById(`input-${diaryId}`);
+            if (!input) return;
             const content = input.value.trim();
-
-            if (!content && !selectedEmoji) {
+            if (!content) return;
+            const commentsContainer = document.getElementById(`comments-${diaryId}`);
+            const status = commentsContainer.querySelector('.comment-status');
+            const button = commentsContainer.querySelector('.comment-submit');
+            const token = getCommentToken();
+            if (currentUser === 'me' && !token) {
+                status.textContent = '哥哥请先在编辑页登录，再发表评论。';
                 return;
             }
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers.Authorization = `Bearer ${token}`;
+            pendingComments.add(pendingKey);
+            button.disabled = true;
+            input.disabled = true;
+            status.textContent = '发送中…';
 
             try {
                 const response = await fetch('/api/diaries', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                     body: JSON.stringify({
                         action: 'addComment',
                         diaryId: diaryId,
                         content: content,
-                        emoji: selectedEmoji || '💬',
-                        user: currentUser
+                        emoji: input.dataset.emoji || '💬',
+                        user: currentUser === 'me' ? 'boyfriend' : 'girlfriend'
                     })
                 });
 
                 const result = await response.json();
 
-                if (result.success) {
+                if (response.ok && result.success) {
                     input.value = '';
-                    selectedEmoji = '';
+                    delete input.dataset.emoji;
 
                     // 重新加载评论
                     const commentsContainer = document.getElementById(`comments-${diaryId}`);
                     await loadComments(diaryId, commentsContainer);
-                }
+                } else throw new Error(response.status === 429 ? '发送太频繁，请稍后再试。' : result.error || '发送失败，请重试。');
             } catch (error) {
-                console.error('提交评论失败:', error);
+                status.textContent = error.message || '发送失败，请重试。';
+            } finally {
+                pendingComments.delete(pendingKey);
+                button.disabled = false;
+                input.disabled = false;
             }
         }
 
         // 键盘提交评论
         function handleCommentKeypress(event, diaryId) {
-            if (event.key === 'Enter') {
+            if (event.key === 'Enter' && !event.isComposing && event.keyCode !== 229) {
+                event.preventDefault();
                 submitComment(diaryId);
             }
         }
 
-        // 日记卡片夏日角落装饰
+        // 保持正文区域干净，只在卡片角落留一片秋叶。
         function diaryCardFlowers() {
-            const wave = '<svg width="52" height="22" viewBox="0 0 72 30" xmlns="http://www.w3.org/2000/svg"><path d="M4 17c9-8 17-8 26 0s17 8 26 0" fill="none" stroke="#7bd5ee" stroke-width="3" stroke-linecap="round" opacity="0.72"/><path d="M14 23c7-5 13-5 20 0s13 5 20 0" fill="none" stroke="#94d9bd" stroke-width="2" stroke-linecap="round" opacity="0.56"/></svg>';
-            const glint = '<svg width="18" height="18" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><g stroke="#ffd166" stroke-width="3" stroke-linecap="round"><line x1="22" y1="6" x2="22" y2="16"/><line x1="22" y1="28" x2="22" y2="38"/><line x1="6" y1="22" x2="16" y2="22"/><line x1="28" y1="22" x2="38" y2="22"/></g><circle cx="22" cy="22" r="4" fill="#ffe59b"/></svg>';
-            const leaf = (rot) => `<svg width="15" height="22" viewBox="0 0 20 32" xmlns="http://www.w3.org/2000/svg"><path d="M4 28C5 15 11 7 18 3c-2 9-6 18-14 25Z" fill="#8ee1d2" opacity="0.82" transform="rotate(${rot},10,16)"/></svg>`;
-            return `
-                <div style="position:absolute;top:-12px;right:12px;display:flex;align-items:center;gap:3px;pointer-events:none;">
-                    ${leaf(-8)}${wave}${glint}
-                </div>
-                <div style="position:absolute;bottom:-12px;left:10px;display:flex;align-items:center;gap:3px;pointer-events:none;">
-                    ${glint}${wave}${leaf(10)}
-                </div>`;
+            return '<span class="diary-leaf" aria-hidden="true"><svg width="26" height="32" viewBox="0 0 30 42" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 34C0 17 14 4 26 3c3 17-7 32-21 31Z" fill="#c59555" fill-opacity=".25"/><path d="M3 40 22 8" stroke="#ad7840" stroke-opacity=".4"/></svg></span>';
         }
 
         const PET_QUOTE_VARIANT_COUNT = 10;
-        const PET_QUOTE_VISIBLE_MS = 120000;
+        const PET_QUOTE_VISIBLE_MS = 12000;
+        let activePetQuote = null;
         const petQuoteCounters = { cat: 0, dog: 0 };
         const petQuoteCache = new Map();
 
         function getDateKey(date) {
-            const value = new Date(date);
+            const value = parseDiaryDate(date);
             if (Number.isNaN(value.getTime())) return '';
 
             return [
@@ -1373,7 +946,7 @@
         function getDiaryContextPair() {
             const sorted = [...diaries]
                 .filter((diary) => diary && diary.date)
-                .sort((a, b) => new Date(b.date) - new Date(a.date));
+                .sort((a, b) => parseDiaryDate(b.date) - parseDiaryDate(a.date));
 
             if (!sorted.length) return [];
 
@@ -1385,7 +958,7 @@
             let previous = sorted.find((diary) => getDateKey(diary.date) === getDateKey(yesterday));
 
             if (current && !previous) {
-                previous = sorted.find((diary) => new Date(diary.date) < new Date(current.date));
+                previous = sorted.find((diary) => parseDiaryDate(diary.date) < parseDiaryDate(current.date));
             }
 
             if (!current) {
@@ -1481,48 +1054,37 @@
         }
 
         function getPetQuoteCacheKey(petType, contextDiaries, variantIndex) {
-            return [
-                petType,
-                variantIndex,
-                ...contextDiaries.map((diary) => `${diary.id || ''}:${getDateKey(diary.date)}:${String(diary.content || '').length}`)
-            ].join('|');
+            // Include content, not just its length: same-length edits need a fresh quote.
+            return JSON.stringify([petType, variantIndex, contextDiaries.map(compactDiaryForQuote)]);
         }
 
-        async function requestModelPetQuote(petType, contextDiaries, variantIndex) {
+        async function requestModelPetQuote(petType, contextDiaries, variantIndex, signal) {
             const cacheKey = getPetQuoteCacheKey(petType, contextDiaries, variantIndex);
-            if (petQuoteCache.has(cacheKey)) {
-                return petQuoteCache.get(cacheKey);
-            }
+            if (petQuoteCache.has(cacheKey)) return petQuoteCache.get(cacheKey);
 
             const controller = new AbortController();
-            const timeoutId = window.setTimeout(() => controller.abort(), 8000);
-
+            const abort = () => controller.abort();
+            if (signal?.aborted) abort();
+            else signal?.addEventListener('abort', abort, { once: true });
+            const timeoutId = window.setTimeout(abort, 8000);
             try {
                 const response = await fetch('/api/pet-quote', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        petType,
-                        variantIndex,
-                        diaries: contextDiaries.map(compactDiaryForQuote)
-                    }),
+                    body: JSON.stringify({ petType, variantIndex, diaries: contextDiaries.map(compactDiaryForQuote) }),
                     signal: controller.signal
                 });
-
-                if (!response.ok) {
-                    throw new Error('pet quote request failed');
-                }
-
+                if (!response.ok) throw new Error('pet quote request failed');
                 const data = await response.json();
-                const quote = String(data.quote || '').trim();
-                if (!quote) {
-                    throw new Error('empty pet quote');
-                }
-
+                const quote = typeof data.quote === 'string' ? data.quote.trim() : '';
+                if (!quote) throw new Error('empty pet quote');
+                // Bound memory when switching through many diary contexts.
+                if (petQuoteCache.size >= 40) petQuoteCache.delete(petQuoteCache.keys().next().value);
                 petQuoteCache.set(cacheKey, quote);
                 return quote;
             } finally {
                 window.clearTimeout(timeoutId);
+                signal?.removeEventListener('abort', abort);
             }
         }
 
@@ -1637,40 +1199,68 @@
             return pickGeneratedLine(lines, variantIndex, petType);
         }
 
+        function dismissPetQuote() {
+            if (!activePetQuote) return;
+            const current = activePetQuote;
+            activePetQuote = null;
+            window.clearTimeout(current.timer);
+            current.controller.abort();
+            current.node.remove();
+        }
+
+        function positionPetQuote(quote, pet) {
+            const rect = pet.getBoundingClientRect();
+            const width = quote.offsetWidth;
+            const height = quote.offsetHeight;
+            const inset = 12;
+            const left = Math.max(inset, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - inset));
+            const above = rect.top - height - 12;
+            const below = above < inset;
+            const top = Math.max(inset, Math.min(below ? rect.bottom + 12 : above, window.innerHeight - height - inset));
+            quote.classList.toggle('is-below', below);
+            quote.style.left = `${left}px`;
+            quote.style.top = `${top}px`;
+            quote.style.setProperty('--quote-tail-left', `${Math.max(20, Math.min(rect.left + rect.width / 2 - left, width - 20))}px`);
+        }
+
         async function showPetQuote(pet, options = {}) {
+            dismissPetQuote();
             const quote = document.createElement('div');
             const petType = options.petType === 'dog' ? 'dog' : 'cat';
             const variantIndex = getPetVariantIndex(petType);
-            const name = petType === 'cat' ? '喵小咪' : '小比格';
             const contextDiaries = getDiaryContextPair();
-            const fallbackQuote = buildPetQuote(petType, variantIndex);
-            const rect = pet.getBoundingClientRect();
-            const left = Math.min(Math.max(rect.left + rect.width / 2, 148), window.innerWidth - 148);
-            const top = Math.max(rect.top - 8, 92);
-
-            document.querySelectorAll('.pet-quote').forEach((node) => node.remove());
             quote.className = 'pet-quote';
-            quote.style.left = `${left}px`;
-            quote.style.top = `${top}px`;
-
+            quote.setAttribute('role', 'status');
+            quote.setAttribute('aria-live', 'polite');
             const nameNode = document.createElement('span');
             nameNode.className = 'quote-name';
-            nameNode.textContent = `${name}：`;
-            const quoteText = document.createTextNode(contextDiaries.length ? '正在读今天的小咪日记...' : fallbackQuote);
+            nameNode.textContent = petType === 'cat' ? '喵小咪：' : '小比格：';
+            // Show a complete local response immediately, while the request and animation run together.
+            const quoteText = document.createTextNode(buildPetQuote(petType, variantIndex));
             quote.appendChild(nameNode);
             quote.appendChild(quoteText);
             document.body.appendChild(quote);
+            positionPetQuote(quote, pet);
+            const current = { node: quote, controller: new AbortController(), timer: null };
+            activePetQuote = current;
+            current.timer = window.setTimeout(() => {
+                if (activePetQuote === current) dismissPetQuote();
+            }, PET_QUOTE_VISIBLE_MS);
             advancePetQuoteCounter(petType);
 
             if (contextDiaries.length) {
                 try {
-                    quoteText.textContent = await requestModelPetQuote(petType, contextDiaries, variantIndex);
-                } catch (error) {
-                    quoteText.textContent = fallbackQuote;
-                }
+                    const text = await requestModelPetQuote(petType, contextDiaries, variantIndex, current.controller.signal);
+                    if (activePetQuote !== current || current.controller.signal.aborted) return;
+                    quoteText.textContent = text;
+                    positionPetQuote(quote, pet);
+                } catch { /* Keep the immediate local response on slow or unavailable networks. */ }
             }
+        }
 
-            window.setTimeout(() => quote.remove(), PET_QUOTE_VISIBLE_MS);
+        function dismissPetInteractions() {
+            dismissPetQuote();
+            document.querySelectorAll('.pet').forEach(pet => pet.cancelPageRun?.());
         }
 
         function getPetSources(img) {
@@ -1726,11 +1316,7 @@
             const { idleSrc, frameSrcs } = getPetSources(img);
             if (!frameSrcs.length) return;
 
-            if (pet.pageRunner) {
-                window.cancelAnimationFrame(pet.pageRunner.petRunFrame);
-                pet.pageRunner.remove();
-                pet.pageRunner = null;
-            }
+            pet.cancelPageRun?.();
 
             const rect = pet.getBoundingClientRect();
             const size = Math.round(Math.max(rect.width, rect.height));
@@ -1781,8 +1367,10 @@
                 pet.classList.remove('is-page-running');
                 if (pet.pageRunner === runner) {
                     pet.pageRunner = null;
+                    pet.cancelPageRun = null;
                 }
             };
+            pet.cancelPageRun = clearRunner;
 
             const moveRunner = (timestamp) => {
                 if (!startedAt) {
@@ -1828,6 +1416,7 @@
 
         function playPetAnimation(pet, options = {}) {
             showPetQuote(pet, options);
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
             if (options.pageRun) {
                 runPetAcrossPage(pet, options);
@@ -1861,15 +1450,22 @@
         }
 
         function initPetInteractions() {
+            window.addEventListener('scroll', dismissPetInteractions, { passive: true, capture: true });
+            window.addEventListener('resize', dismissPetInteractions, { passive: true });
+            window.addEventListener('pagehide', dismissPetInteractions);
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) dismissPetInteractions();
+            });
             preloadPetFrames();
             bindPetAction('.pet.cat', { petType: 'cat', frameInterval: 320, totalFrames: 10 });
-            bindPetAction('.pet.dog', { petType: 'dog', pageRun: true, duration: 6500 });
+            bindPetAction('.pet.dog', { petType: 'dog', pageRun: true, duration: 2200 });
         }
 
         // 初始化
         createSummerDrifts();
         initPetInteractions();
         updateDate();
+        renderCalendar();
         fetchDiaries();
     </script>
 </body>

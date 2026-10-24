@@ -1,7 +1,7 @@
-import Redis from 'ioredis';
+import { getRedis, rateLimit, handleError } from '../lib/server.js';
 import crypto from 'crypto';
 
-const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
+const QUOTE_TIMEOUT_MS = 6000;
 
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 const DEFAULT_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
@@ -25,8 +25,8 @@ function cleanText(text, maxLength = 1200) {
 
 function normalizeDiary(diary) {
   return {
-    id: diary?.id || '',
-    date: diary?.date || '',
+    id: cleanText(diary?.id, 100),
+    date: cleanText(diary?.date, 40),
     title: cleanText(diary?.title, 80),
     content: cleanText(diary?.content, 1400),
     mood: cleanText(diary?.mood, 30),
@@ -56,7 +56,7 @@ function cacheKeyFor(petType, variantIndex, diaries) {
 }
 
 function cleanQuote(quote) {
-  return String(quote || '')
+  return (typeof quote === 'string' ? quote : '')
     .replace(/["“”‘’]/g, '')
     .replace(/[^\u3400-\u9fffA-Za-z0-9，。！？、；：\s]/g, '')
     .replace(/\s+/g, '')
@@ -64,18 +64,19 @@ function cleanQuote(quote) {
 }
 
 export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  if (!process.env.DEEPSEEK_API_KEY) {
-    return res.status(500).json({ error: '缺少 DEEPSEEK_API_KEY 环境变量' });
   }
 
   const petType = normalizePetType(req.body?.petType);
   const variantIndex = normalizeVariantIndex(req.body?.variantIndex);
   const diaries = Array.isArray(req.body?.diaries)
-    ? req.body.diaries.slice(0, 2).map(normalizeDiary)
+    ? req.body.diaries.slice(0, 2)
+      .filter((diary) => diary && typeof diary === 'object' && !Array.isArray(diary))
+      .map(normalizeDiary)
+      .filter((diary) => diary.title || diary.content)
     : [];
 
   if (!diaries.length) {
@@ -83,12 +84,27 @@ export default async function handler(req, res) {
   }
 
   const cacheKey = cacheKeyFor(petType, variantIndex, diaries);
-
-  if (redis) {
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      return res.json({ quote: cached, cached: true });
+  let redis;
+  try {
+    redis = getRedis();
+    // Cache failures should not discard a result or bypass generation limits.
+    try {
+      const cached = cleanQuote(await redis.get(cacheKey));
+      if (cached) {
+        return res.json({ quote: cached, cached: true });
+      }
+    } catch {
+      console.warn('Pet quote cache read failed');
     }
+
+    if (!process.env.DEEPSEEK_API_KEY) {
+      return res.status(503).json({ error: '语录服务暂不可用' });
+    }
+
+    await rateLimit(redis, req, 'pet-quote', 30, 3600);
+    await rateLimit(redis, req, 'pet-quote-global', 100, 3600, { global: true });
+  } catch (error) {
+    return handleError(res, error);
   }
 
   const petName = petType === 'cat' ? '喵小咪' : '小比格';
@@ -135,47 +151,56 @@ export default async function handler(req, res) {
     `日记 JSON：${JSON.stringify(diaries)}`
   ].join('\n');
 
-  const response = await fetch(DEEPSEEK_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: DEFAULT_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: '你是小咪日记的宠物语录生成器。日记作者哥哥就是小比格；只输出一句点击对象第一视角的中文短句，句子里的我必须等于点击对象。'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      stream: false,
-      temperature: 0.82,
-      max_tokens: 120
-    })
-  });
-
-  if (!response.ok) {
-    const detail = await response.text();
-    return res.status(502).json({
-      error: 'DeepSeek 请求失败',
-      detail: detail.slice(0, 240)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), QUOTE_TIMEOUT_MS);
+  let quote;
+  try {
+    const response = await fetch(DEEPSEEK_API_URL, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: DEFAULT_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: '你是小咪日记的宠物语录生成器。日记作者哥哥就是小比格；只输出一句点击对象第一视角的中文短句，句子里的我必须等于点击对象。'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        stream: false,
+        temperature: 0.82,
+        max_tokens: 120
+      })
     });
+
+    if (!response.ok) {
+      return res.status(502).json({ error: '语录服务暂不可用' });
+    }
+
+    const data = await response.json();
+    quote = cleanQuote(data?.choices?.[0]?.message?.content);
+
+    if (!quote) {
+      return res.status(502).json({ error: '语录服务未返回有效语录' });
+    }
+  } catch {
+    return res.status(controller.signal.aborted ? 504 : 502)
+      .json({ error: '语录服务暂不可用，请稍后再试' });
+  } finally {
+    clearTimeout(timeoutId);
   }
 
-  const data = await response.json();
-  const quote = cleanQuote(data.choices?.[0]?.message?.content);
-
-  if (!quote) {
-    return res.status(502).json({ error: 'DeepSeek 未返回有效语录' });
-  }
-
-  if (redis) {
+  try {
     await redis.set(cacheKey, quote, 'EX', 60 * 60 * 24);
+  } catch {
+    console.warn('Pet quote cache write failed');
   }
 
   return res.json({ quote, cached: false });

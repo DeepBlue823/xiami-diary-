@@ -485,6 +485,8 @@
             border-color: var(--summer-coral);
         }
 
+        button:disabled { opacity: 0.6; cursor: wait; }
+
         /* 夏日小物件飘落动画 */
         @keyframes summerDrift {
             0% {
@@ -543,7 +545,7 @@
 <body>
     <button class="logout-btn" onclick="logout()">退出登录</button>
 
-    <div class="container">
+    <div class="container" inert>
         <header>
             <h1>写日记</h1>
             <div class="date-display" id="currentDate"></div>
@@ -552,7 +554,7 @@
         <div class="diary-card">
             <div class="input-group">
                 <label for="diaryTitle">今日标题</label>
-                <input type="text" id="diaryTitle" placeholder="给今天起个标题吧...">
+                <input type="text" id="diaryTitle" maxlength="200" placeholder="给今天起个标题吧...">
             </div>
 
             <div class="input-group">
@@ -574,21 +576,21 @@
 
             <div class="input-group">
                 <label for="girlfriendLocation">小咪所在地</label>
-                <input type="text" id="girlfriendLocation" placeholder="小咪现在在哪里呢？">
+                <input type="text" id="girlfriendLocation" maxlength="200" placeholder="小咪现在在哪里呢？">
             </div>
 
             <div class="input-group">
                 <label for="myLocation">我的所在地</label>
-                <input type="text" id="myLocation" placeholder="我现在在哪里呢？">
+                <input type="text" id="myLocation" maxlength="200" placeholder="我现在在哪里呢？">
             </div>
 
             <div class="input-group">
                 <label for="diaryContent">今日记录</label>
-                <textarea id="diaryContent" placeholder="今天发生了什么有趣的事情呢？"></textarea>
+                <textarea id="diaryContent" maxlength="100000" placeholder="今天发生了什么有趣的事情呢？"></textarea>
             </div>
 
             <div class="btn-group">
-                <button class="btn btn-primary" onclick="saveDiary()">保存日记</button>
+                <button class="btn btn-primary" id="saveDiaryButton" onclick="saveDiary()">保存日记</button>
                 <button class="btn btn-secondary" onclick="clearForm()">清空</button>
             </div>
         </div>
@@ -600,9 +602,9 @@
             <div class="input-group">
                 <label>添加见面日期</label>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="date" id="newMeetingStart" style="flex: 1;">
+                    <input type="date" id="newMeetingStart" aria-label="见面开始日期" style="flex: 1;">
                     <span>至</span>
-                    <input type="date" id="newMeetingEnd" style="flex: 1;">
+                    <input type="date" id="newMeetingEnd" aria-label="见面结束日期" style="flex: 1;">
                     <button class="btn btn-primary" onclick="addMeeting()">添加</button>
                 </div>
             </div>
@@ -620,426 +622,385 @@
     <div class="login-overlay" id="loginOverlay">
         <div class="login-box">
             <h2>请输入密码</h2>
-            <div class="login-error" id="loginError">密码错误，请重试</div>
-            <input type="password" id="password" placeholder="请输入管理密码" onkeypress="handleEnter(event)">
-            <button class="btn btn-primary" onclick="login()">登录</button>
+            <div class="login-error" id="loginError" role="alert">密码错误，请重试</div>
+            <input type="password" id="password" placeholder="请输入管理密码" autocomplete="current-password" onkeydown="handleEnter(event)">
+            <button class="btn btn-primary" id="loginButton" onclick="login()">登录</button>
         </div>
     </div>
 
-    <div class="toast" id="toast">保存成功啦～</div>
+    <div class="toast" id="toast" role="status" aria-live="polite">保存成功啦～</div>
 
     <script>
-        const API_BASE = '';
-        let authToken = localStorage.getItem('xiami_token');
+        let authToken = '';
+        try { authToken = localStorage.getItem('xiami_token') || ''; } catch (_) {}
+        let selectedMood = null;
+        let editingId = null;
+        let diariesCache = [];
+        let mutationPending = false;
+        let loginPending = false;
+        let toastTimer;
+        let diaryRequest = 0;
+        let meetingRequest = 0;
+        const diaryFieldIds = ['diaryTitle', 'diaryContent', 'diaryDate', 'girlfriendLocation', 'myLocation'];
+        const editor = document.querySelector('.container');
 
-        // 检查登录状态
+        function rememberToken(token) {
+            authToken = token;
+            try {
+                if (token) localStorage.setItem('xiami_token', token);
+                else localStorage.removeItem('xiami_token');
+            } catch (_) { /* 当前页面仍可使用内存中的登录状态。 */ }
+        }
+
+        function showLogin(message = '') {
+            document.getElementById('loginOverlay').style.display = 'flex';
+            editor.inert = true;
+            const error = document.getElementById('loginError');
+            error.textContent = message;
+            error.style.display = message ? 'block' : 'none';
+            document.getElementById('password').focus();
+        }
+
+        function hideLogin() {
+            document.getElementById('loginOverlay').style.display = 'none';
+            editor.inert = false;
+        }
+
+        async function requestJSON(url, options = {}, requiresAuth = false) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    cache: 'no-store',
+                    signal: controller.signal,
+                    headers: {
+                        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+                        ...(requiresAuth ? { Authorization: `Bearer ${authToken}` } : {}),
+                        ...options.headers
+                    }
+                });
+                if (response.status === 401 && requiresAuth) {
+                    rememberToken('');
+                    showLogin('登录已过期，请重新登录。未保存的内容仍在。');
+                    throw new Error('登录已过期，请重新登录');
+                }
+                let data;
+                try { data = await response.json(); }
+                catch (_) { throw new Error('服务器暂时无法响应，请稍后重试'); }
+                if (!response.ok) throw new Error(data.error || '请求失败，请稍后重试');
+                return data;
+            } catch (error) {
+                if (error.name === 'AbortError') throw new Error('请求超时，请先刷新列表确认操作结果，再重试');
+                if (error instanceof TypeError) throw new Error('网络连接失败，请稍后重试');
+                throw error;
+            } finally {
+                clearTimeout(timeout);
+            }
+        }
+
         async function checkAuth() {
-            if (!authToken) {
-                document.getElementById('loginOverlay').style.display = 'flex';
+            if (!authToken) { showLogin(); return false; }
+            try {
+                const data = await requestJSON('/api/auth', { method: 'GET' }, true);
+                if (!data.success) throw new Error('登录状态校验失败，请重新登录');
+                hideLogin();
+                return true;
+            } catch (error) {
+                showLogin(error.message);
                 return false;
             }
-            return true;
         }
 
-        // 登录
         async function login() {
-            const password = document.getElementById('password').value;
-            if (!password) return;
-
+            if (loginPending) return;
+            const input = document.getElementById('password');
+            if (!input.value) { showLogin('请输入管理密码'); return; }
+            loginPending = true;
+            const button = document.getElementById('loginButton');
+            button.disabled = true;
+            button.textContent = '登录中…';
+            document.getElementById('loginError').style.display = 'none';
             try {
-                const response = await fetch('/api/auth', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
+                const data = await requestJSON('/api/auth', {
+                    method: 'POST', body: JSON.stringify({ password: input.value })
                 });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    localStorage.setItem('xiami_token', data.token);
-                    authToken = data.token;
-                    document.getElementById('loginOverlay').style.display = 'none';
-                    fetchDiaries();
-                } else {
-                    document.getElementById('loginError').style.display = 'block';
-                }
+                if (!data.success || typeof data.token !== 'string') throw new Error('登录失败，请重试');
+                rememberToken(data.token);
+                input.value = '';
+                hideLogin();
+                await Promise.all([fetchDiaries(), fetchMeetings()]);
             } catch (error) {
-                document.getElementById('loginError').style.display = 'block';
+                showLogin(error.message);
+            } finally {
+                loginPending = false;
+                button.disabled = false;
+                button.textContent = '登录';
             }
         }
 
-        // 退出登录
-        function logout() {
-            localStorage.removeItem('xiami_token');
-            location.reload();
+        async function logout() {
+            if (mutationPending || !canDiscardDraft()) return;
+            const button = document.querySelector('.logout-btn');
+            button.disabled = true;
+            try {
+                await requestJSON('/api/auth', { method: 'DELETE' }, true);
+                rememberToken('');
+                clearForm(true);
+                showLogin();
+            } catch (error) { showToast(error.message); }
+            finally { button.disabled = false; }
         }
 
-        // 回车登录
         function handleEnter(event) {
-            if (event.key === 'Enter') {
+            if (event.key === 'Enter' && !event.isComposing) {
+                event.preventDefault();
                 login();
             }
         }
 
-        // 显示当前日期
         function updateDate() {
-            const now = new Date();
-            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-CN', options);
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('zh-CN', {
+                year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+            });
         }
 
-        // 心情选择
-        let selectedMood = null;
-
         document.querySelectorAll('.mood-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
-                this.classList.add('selected');
-                selectedMood = this.dataset.mood;
-            });
+            btn.setAttribute('aria-pressed', 'false');
+            btn.addEventListener('click', () => setMood(btn.dataset.mood));
         });
 
-        // 保存/更新日记
-        let editingId = null;
+        function setMood(mood) {
+            selectedMood = null;
+            document.querySelectorAll('.mood-btn').forEach(button => {
+                const selected = button.dataset.mood === mood;
+                button.classList.toggle('selected', selected);
+                button.setAttribute('aria-pressed', String(selected));
+                if (selected) selectedMood = mood;
+            });
+        }
+
+        function draftState() {
+            return JSON.stringify([editingId, selectedMood, ...diaryFieldIds.map(id => document.getElementById(id).value)]);
+        }
+        let savedDraftState = draftState();
+        function canDiscardDraft() {
+            return draftState() === savedDraftState || confirm('有尚未保存的日记内容，确定放弃吗？');
+        }
+        window.addEventListener('beforeunload', event => {
+            if (draftState() !== savedDraftState) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+
+        async function runMutation(callback) {
+            if (mutationPending) return;
+            if (!authToken) { showLogin('请先登录，未保存的内容仍在。'); return; }
+            mutationPending = true;
+            const controls = [...document.querySelectorAll('.container input, .container textarea, .container button, .logout-btn')];
+            const disabledStates = controls.map(control => control.disabled);
+            controls.forEach(control => { control.disabled = true; });
+            try { await callback(); }
+            catch (error) { showToast(error.message); }
+            finally {
+                controls.forEach((control, index) => { control.disabled = disabledStates[index]; });
+                mutationPending = false;
+                document.getElementById('saveDiaryButton').textContent = editingId !== null ? '更新日记' : '保存日记';
+            }
+        }
+
+        async function writeData(method, body) {
+            const data = await requestJSON('/api/diaries', { method, body: JSON.stringify(body) }, true);
+            if (!data.success) throw new Error(data.error || '操作失败，请重试');
+            return data;
+        }
 
         async function saveDiary() {
             const title = document.getElementById('diaryTitle').value.trim();
             const content = document.getElementById('diaryContent').value.trim();
-            const dateInput = document.getElementById('diaryDate').value;
-            const girlfriendLocation = document.getElementById('girlfriendLocation').value.trim();
-            const myLocation = document.getElementById('myLocation').value.trim();
-
-            if (!title && !content) {
-                showToast('请写点什么吧～');
-                return;
-            }
-
-            try {
+            if (!title && !content) { showToast('请写点什么吧～'); return; }
+            await runMutation(async () => {
+                document.getElementById('saveDiaryButton').textContent = '保存中…';
                 const body = {
-                    title: title || '无标题',
-                    content: content,
-                    mood: selectedMood,
-                    date: dateInput || null,
-                    girlfriendLocation: girlfriendLocation || null,
-                    myLocation: myLocation || null
+                    title: title || '无标题', content, mood: selectedMood,
+                    date: document.getElementById('diaryDate').value || null,
+                    girlfriendLocation: document.getElementById('girlfriendLocation').value.trim() || null,
+                    myLocation: document.getElementById('myLocation').value.trim() || null
                 };
-
-                let response;
-                if (editingId) {
-                    // 更新现有日记
-                    body.id = editingId;
-                    response = await fetch('/api/diaries', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authToken}`
-                        },
-                        body: JSON.stringify(body)
-                    });
-                } else {
-                    // 新建日记
-                    response = await fetch('/api/diaries', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authToken}`
-                        },
-                        body: JSON.stringify(body)
-                    });
-                }
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showToast('保存成功啦～');
-                    clearForm();
-                    fetchDiaries();
-                } else {
-                    showToast(data.error || '保存失败');
-                }
-            } catch (error) {
-                showToast('保存失败，请重试');
-            }
+                if (editingId !== null) body.id = editingId;
+                await writeData('POST', body);
+                clearForm(true);
+                showToast('保存成功啦～');
+                await fetchDiaries();
+            });
         }
 
-        // 编辑日记
         function editDiary(id) {
-            const diaries = JSON.parse(document.getElementById('diaryListContent').dataset.diaries || '[]');
-            const diary = diaries.find(d => d.id == id);
-            if (!diary) return;
-
-            // 填充表单
+            if (mutationPending) return;
+            const diary = diariesCache.find(item => String(item.id) === String(id));
+            if (!diary || !canDiscardDraft()) return;
             document.getElementById('diaryTitle').value = diary.title || '';
             document.getElementById('diaryContent').value = diary.content || '';
-            document.getElementById('diaryDate').value = diary.date ? diary.date.split('T')[0] : '';
+            document.getElementById('diaryDate').value = typeof diary.date === 'string' ? diary.date.split('T')[0] : '';
             document.getElementById('girlfriendLocation').value = diary.girlfriendLocation || '';
             document.getElementById('myLocation').value = diary.myLocation || '';
-
-            // 设置心情
-            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
-            if (diary.mood) {
-                const moodBtn = document.querySelector(`.mood-btn[data-mood="${diary.mood}"]`);
-                if (moodBtn) {
-                    moodBtn.classList.add('selected');
-                    selectedMood = diary.mood;
-                }
-            } else {
-                selectedMood = null;
-            }
-
-            editingId = id;
-
-            // 滚动到顶部
+            setMood(diary.mood);
+            editingId = diary.id;
+            savedDraftState = draftState();
+            document.getElementById('saveDiaryButton').textContent = '更新日记';
             window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            // 更改按钮文字
-            document.querySelector('.btn-primary').textContent = '更新日记';
         }
 
-        // 清空表单
-        function clearForm() {
-            document.getElementById('diaryTitle').value = '';
-            document.getElementById('diaryDate').value = '';
-            document.getElementById('diaryContent').value = '';
-            document.getElementById('girlfriendLocation').value = '';
-            document.getElementById('myLocation').value = '';
-            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
-            selectedMood = null;
+        function clearForm(force = false) {
+            if (!force && (mutationPending || !canDiscardDraft())) return;
+            diaryFieldIds.forEach(id => { document.getElementById(id).value = ''; });
+            setMood(null);
             editingId = null;
-            document.querySelector('.btn-primary').textContent = '保存日记';
+            savedDraftState = draftState();
+            document.getElementById('saveDiaryButton').textContent = '保存日记';
         }
 
-        // 显示提示
         function showToast(message) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2000);
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 4000);
         }
 
-        // 获取日记列表
+        function appendText(parent, tag, className, text) {
+            const node = document.createElement(tag);
+            node.className = className;
+            node.textContent = String(text ?? '');
+            parent.appendChild(node);
+            return node;
+        }
+
+        function listError(container, message, retry) {
+            const error = document.createElement('div');
+            error.className = 'empty-state load-error';
+            error.textContent = message + ' ';
+            const button = appendText(error, 'button', 'edit-btn', '重试');
+            button.addEventListener('click', retry);
+            container.querySelector('.load-error')?.remove();
+            container.prepend(error);
+        }
+
         async function fetchDiaries() {
+            const request = ++diaryRequest;
             try {
-                const response = await fetch('/api/diaries');
-                const diaries = await response.json();
-                document.getElementById('diaryListContent').dataset.diaries = JSON.stringify(diaries);
-                renderDiaryList(diaries);
+                const diaries = await requestJSON('/api/diaries');
+                if (!Array.isArray(diaries)) throw new Error('日记数据格式异常');
+                if (request !== diaryRequest) return;
+                diariesCache = diaries.filter(item => item && typeof item === 'object');
+                renderDiaryList(diariesCache);
             } catch (error) {
-                document.getElementById('diaryListContent').innerHTML =
-                    '<div class="empty-state">加载失败，请稍后重试</div>';
+                if (request === diaryRequest) listError(document.getElementById('diaryListContent'), '加载日记失败：' + error.message, fetchDiaries);
             }
         }
 
-        // 渲染日记列表
         function renderDiaryList(diaries) {
             const container = document.getElementById('diaryListContent');
-
-            if (!diaries || diaries.length === 0) {
-                container.innerHTML = '<div class="empty-state">还没有日记呢，开始写第一篇吧～</div>';
-                return;
-            }
-
-            // 按日期排序
-            diaries.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            const moodEmojis = {
-                happy: '😊',
-                love: '😍',
-                peaceful: '😌',
-                sad: '😢',
-                angry: '😤',
-                tired: '😴'
-            };
-
-            container.innerHTML = diaries.map(diary => {
+            container.replaceChildren();
+            if (!diaries.length) { appendText(container, 'div', 'empty-state', '还没有日记呢，开始写第一篇吧～'); return; }
+            const moods = { happy: '😊', love: '😍', peaceful: '😌', sad: '😢', angry: '😤', tired: '😴' };
+            const fragment = document.createDocumentFragment();
+            [...diaries].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(diary => {
+                const item = document.createElement('div');
+                item.className = 'diary-item';
+                item.dataset.id = String(diary.id);
+                // 装饰是固定模板；所有保存的数据仅作为文本插入。
+                item.innerHTML = diaryCardFlowers();
+                const actions = appendText(item, 'div', '', '');
+                actions.style.cssText = 'display:flex;justify-content:space-between;align-items:center';
+                const edit = appendText(actions, 'button', 'edit-btn', '编辑');
+                edit.addEventListener('click', event => { event.stopPropagation(); editDiary(diary.id); });
+                const remove = appendText(actions, 'button', 'delete-btn', '×');
+                remove.setAttribute('aria-label', '删除日记');
+                remove.addEventListener('click', event => { event.stopPropagation(); deleteDiary(diary.id); });
                 const date = new Date(diary.date);
-                const dateStr = date.toLocaleDateString('zh-CN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    weekday: 'short'
+                appendText(item, 'div', 'date', Number.isNaN(date.getTime()) ? '日期未知' : date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }));
+                appendText(item, 'div', 'title', diary.title || '无标题');
+                appendText(item, 'div', 'preview', diary.content);
+                if (Object.prototype.hasOwnProperty.call(moods, diary.mood)) appendText(item, 'div', 'mood', moods[diary.mood]);
+                const meta = appendText(item, 'div', 'meta-info', '');
+                if (diary.girlfriendLocation) appendText(meta, 'span', '', '📍 小咪: ' + diary.girlfriendLocation);
+                if (diary.myLocation) appendText(meta, 'span', '', '📍 哥哥: ' + diary.myLocation);
+                item.addEventListener('click', () => {
+                    item.classList.toggle('expanded');
+                    const hint = item.querySelector('.expand-hint');
+                    if (item.classList.contains('expanded') && !hint) appendText(item, 'div', 'expand-hint', '点击收起');
+                    else if (hint) hint.remove();
                 });
-
-                return `
-                    <div class="diary-item" data-id="${diary.id}">
-                        ${diaryCardFlowers()}
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <button class="edit-btn" onclick="event.stopPropagation(); editDiary(${diary.id})">编辑</button>
-                            <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary(${diary.id})">×</button>
-                        </div>
-                        <div class="date">${dateStr}</div>
-                        <div class="title">${diary.title}</div>
-                        <div class="preview">${diary.content}</div>
-                        ${diary.mood ? `<div class="mood">${moodEmojis[diary.mood]}</div>` : ''}
-                        <div class="meta-info">
-                            ${diary.girlfriendLocation ? `<span>📍 小咪: ${diary.girlfriendLocation}</span>` : ''}
-                            ${diary.myLocation ? `<span>📍 哥哥: ${diary.myLocation}</span>` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                fragment.appendChild(item);
+            });
+            container.appendChild(fragment);
         }
 
-        // 查看/展开日记详情
-        function viewDiary(id) {
-            const diaries = JSON.parse(document.getElementById('diaryListContent').dataset.diaries || '[]');
-            const diary = diaries.find(d => d.id == id);
-            if (!diary) return;
-
-            // 找到对应的日记项元素并切换展开状态
-            const diaryItems = document.querySelectorAll('.diary-item');
-            diaryItems.forEach(item => {
-                if (item.dataset.id == id) {
-                    item.classList.toggle('expanded');
-                    // 更新提示文字
-                    let hint = item.querySelector('.expand-hint');
-                    if (item.classList.contains('expanded')) {
-                        if (!hint) {
-                            hint = document.createElement('div');
-                            hint.className = 'expand-hint';
-                            item.appendChild(hint);
-                        }
-                        hint.textContent = '点击收起';
-                    } else if (hint) {
-                        hint.remove();
-                    }
-                }
+        async function deleteDiary(id) {
+            if (mutationPending || !confirm('确定要删除这篇日记吗？')) return;
+            if (String(editingId) === String(id) && !canDiscardDraft()) return;
+            await runMutation(async () => {
+                await writeData('DELETE', { id });
+                if (String(editingId) === String(id)) clearForm(true);
+                showToast('已删除');
+                await fetchDiaries();
             });
         }
 
-        // 删除日记
-        async function deleteDiary(id) {
-            if (!confirm('确定要删除这篇日记吗？')) return;
-
-            try {
-                const response = await fetch('/api/diaries', {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({ id })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showToast('已删除');
-                    fetchDiaries();
-                } else {
-                    showToast(data.error || '删除失败');
-                }
-            } catch (error) {
-                showToast('删除失败，请重试');
-            }
-        }
-
-        // 获取见面日期列表
         async function fetchMeetings() {
+            const request = ++meetingRequest;
             try {
-                const response = await fetch('/api/diaries?action=meetings');
-                const meetings = await response.json();
-                renderMeetings(meetings);
+                const meetings = await requestJSON('/api/diaries?action=meetings');
+                if (!Array.isArray(meetings)) throw new Error('见面日期数据格式异常');
+                if (request === meetingRequest) renderMeetings(meetings.filter(item => item && typeof item === 'object'));
             } catch (error) {
-                console.error('加载见面日期失败:', error);
+                if (request === meetingRequest) listError(document.getElementById('meetingsList'), '加载见面日期失败：' + error.message, fetchMeetings);
             }
         }
 
-        // 渲染见面日期列表
         function renderMeetings(meetings) {
             const container = document.getElementById('meetingsList');
-
-            if (!meetings || meetings.length === 0) {
-                container.innerHTML = '<div class="empty-state">还没有见面日期记录</div>';
-                return;
-            }
-
-            container.innerHTML = meetings.map(meeting => {
-                const start = new Date(meeting.startDate);
-                const end = new Date(meeting.endDate);
-                const startStr = start.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
-                const endStr = end.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
-
-                return `
-                    <div class="diary-item" style="cursor: default;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>🤍 ${startStr} - ${endStr}</span>
-                            <button class="delete-btn" onclick="deleteMeeting(${meeting.id})">×</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            container.replaceChildren();
+            if (!meetings.length) { appendText(container, 'div', 'empty-state', '还没有见面日期记录'); return; }
+            meetings.forEach(meeting => {
+                const item = appendText(container, 'div', 'diary-item', '');
+                item.style.cursor = 'default';
+                const row = appendText(item, 'div', '', '');
+                row.style.cssText = 'display:flex;justify-content:space-between;align-items:center';
+                const dateText = value => {
+                    const date = new Date(typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value + 'T00:00:00' : value);
+                    return Number.isNaN(date.getTime()) ? '日期未知' : date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+                };
+                appendText(row, 'span', '', `🤍 ${dateText(meeting.startDate)} - ${dateText(meeting.endDate)}`);
+                const remove = appendText(row, 'button', 'delete-btn', '×');
+                remove.setAttribute('aria-label', '删除见面日期');
+                remove.addEventListener('click', () => deleteMeeting(meeting.id));
+            });
         }
 
-        // 添加见面日期
         async function addMeeting() {
             const startDate = document.getElementById('newMeetingStart').value;
             const endDate = document.getElementById('newMeetingEnd').value;
-
-            if (!startDate || !endDate) {
-                showToast('请选择开始和结束日期');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/diaries', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({
-                        action: 'addMeeting',
-                        startDate,
-                        endDate
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showToast('添加成功');
-                    document.getElementById('newMeetingStart').value = '';
-                    document.getElementById('newMeetingEnd').value = '';
-                    fetchMeetings();
-                } else {
-                    showToast(data.error || '添加失败');
-                }
-            } catch (error) {
-                showToast('添加失败，请重试');
-            }
+            if (!startDate || !endDate) { showToast('请选择开始和结束日期'); return; }
+            if (endDate < startDate) { showToast('结束日期不能早于开始日期'); return; }
+            await runMutation(async () => {
+                await writeData('POST', { action: 'addMeeting', startDate, endDate });
+                document.getElementById('newMeetingStart').value = '';
+                document.getElementById('newMeetingEnd').value = '';
+                showToast('添加成功');
+                await fetchMeetings();
+            });
         }
 
-        // 删除见面日期
         async function deleteMeeting(id) {
-            if (!confirm('确定删除这个见面日期吗？')) return;
-
-            try {
-                const response = await fetch('/api/diaries', {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({
-                        action: 'deleteMeeting',
-                        id
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showToast('已删除');
-                    fetchMeetings();
-                } else {
-                    showToast(data.error || '删除失败');
-                }
-            } catch (error) {
-                showToast('删除失败，请重试');
-            }
+            if (mutationPending || !confirm('确定删除这个见面日期吗？')) return;
+            await runMutation(async () => {
+                await writeData('DELETE', { action: 'deleteMeeting', id });
+                showToast('已删除');
+                await fetchMeetings();
+            });
         }
 
         // 创建轻量夏日光影：小浪纹、星芒和薄荷叶。
